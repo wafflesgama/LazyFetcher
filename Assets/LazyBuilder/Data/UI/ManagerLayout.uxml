@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement style="flex-direction: row;">
+        <ui:VisualElement style="flex-grow: 1;">
+            <ui:VisualElement style="height: 30px;" />
+            <ui:VisualElement style="flex-grow: 1; flex-shrink: 0; flex-basis: auto; background-color: rgba(0, 0, 0, 0.43);">
+                <ui:ListView focusable="true" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="SideTab" style="width: 110px; background-color: rgba(0, 0, 0, 0.27);" />
+    </ui:VisualElement>
+</ui:UXML>
