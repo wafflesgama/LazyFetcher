@@ -143,10 +143,8 @@ namespace LazyBuilder
             defaultButtonColor = new Color(0.345098f, 0.345098f, 0.345098f, 1);
             activeButtonColor = new Color(0.27f, 0.38f, 0.49f);
 
+            MainController.Init(this);
 
-            MainController.appPath = Path.GetDirectoryName(Application.dataPath);
-            var currentPath = Path.GetDirectoryName(AssetDatabase.GetAssetPath(MonoScript.FromScriptableObject(this)));
-            MainController.basePath = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(currentPath)));
         }
 
 
@@ -158,7 +156,7 @@ namespace LazyBuilder
             // root.styleSheets.Add(Resources.Load<StyleSheet>("qtStyles"));
 
             // Loads and clones our VisualTree (eg. our UXML structure) inside the root.
-            var quickToolVisualTree = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath($"{MainController.basePath}/{MainController.UI_PATH}/BuilderLayout.uxml", typeof(VisualTreeAsset));
+            var quickToolVisualTree = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath($"{MainController.relativePath}/{MainController.UI_PATH}/BuilderLayout.uxml", typeof(VisualTreeAsset));
             //var quickToolVisualTree = Resources.Load<VisualTreeAsset>("MainLayout");
             quickToolVisualTree.CloneTree(_root);
         }
@@ -228,7 +226,7 @@ namespace LazyBuilder
             {
                 //var template = Resources.Load<VisualTreeAsset>("LazyItem");
                 if (_itemTemplate == null)
-                    _itemTemplate = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath($"{MainController.basePath}/{MainController.UI_PATH}/BuilderItemLayout.uxml", typeof(VisualTreeAsset));
+                    _itemTemplate = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath($"{MainController.relativePath}/{MainController.UI_PATH}/BuilderItemLayout.uxml", typeof(VisualTreeAsset));
 
                 var element = _itemTemplate.CloneTree();
                 SetupButton(element, items[i].Id, i, $"{selectedPool}/{items[i].Id}");
@@ -254,7 +252,7 @@ namespace LazyBuilder
 
             // var buttonIcon = button.Q(className: "quicktool-button-icon");
 
-            var texture = await Fetcher.WebImage(path, "thumbnail", "png");
+            var texture = await MainController.GetImage(path, "thumbnail", "png");
 
 
             button.style.backgroundImage = texture;
@@ -280,7 +278,7 @@ namespace LazyBuilder
 
         private void SetupPreviewUtils()
         {
-            GameObject groundObj = AssetDatabase.LoadAssetAtPath($"{MainController.basePath}/{MainController.MESHES_PATH}/ground.fbx", typeof(UnityEngine.Object)) as GameObject;
+            GameObject groundObj = AssetDatabase.LoadAssetAtPath($"{MainController.relativePath}/{MainController.MESHES_PATH}/ground.fbx", typeof(UnityEngine.Object)) as GameObject;
 
             if (groundObj == null)
             {
@@ -288,7 +286,7 @@ namespace LazyBuilder
                 return;
             }
             groundMesh = groundObj.GetComponent<MeshFilter>().sharedMesh;
-            groundMat = AssetDatabase.LoadAssetAtPath<Material>($"{MainController.basePath}/{MainController.MATERIALS_PATH}/groundMat.mat");
+            groundMat = AssetDatabase.LoadAssetAtPath<Material>($"{MainController.relativePath}/{MainController.MATERIALS_PATH}/groundMat.mat");
         }
 
         private void SetupCamera()
@@ -325,7 +323,7 @@ namespace LazyBuilder
             //previewRenderUtility.camera.orthographic = true;
         }
 
-   
+
 
         private void RenderItemPreview()
         {
@@ -471,7 +469,7 @@ namespace LazyBuilder
 
         private void GetTmpItems()
         {
-            string tmpPath = $"{MainController.appPath}/{MainController.basePath}/{MainController.TEMP_ITEMS_PATH}";
+            string tmpPath = $"{MainController.absolutePath}/{MainController.relativePath}/{MainController.TEMP_ITEMS_PATH}";
             if (!Directory.Exists(tmpPath))
                 Directory.CreateDirectory(tmpPath);
 
@@ -513,7 +511,7 @@ namespace LazyBuilder
         {
             if (tempItems.Count >= tempArraySize)
             {
-                var filePath = $"{MainController.appPath}/{MainController.basePath}/{MainController.TEMP_ITEMS_PATH}/{tempItems[0]}";
+                var filePath = $"{MainController.absolutePath}/{MainController.relativePath}/{MainController.TEMP_ITEMS_PATH}/{tempItems[0]}";
                 File.Delete(filePath);
                 File.Delete(filePath + ".meta");
                 tempItems.RemoveAt(0);
@@ -528,7 +526,7 @@ namespace LazyBuilder
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
-            AssetDatabase.MoveAsset($"{MainController.basePath}/{MainController.TEMP_ITEMS_PATH}/{itemName}", $"{MainController.basePath}/{MainController.STORED_ITEMS_PATH}/{itemName}");
+            AssetDatabase.MoveAsset($"{MainController.relativePath}/{MainController.TEMP_ITEMS_PATH}/{itemName}", $"{MainController.relativePath}/{MainController.STORED_ITEMS_PATH}/{itemName}");
         }
 
         #endregion Temporary Items Buffer
@@ -624,7 +622,7 @@ namespace LazyBuilder
         private void Generate()
         {
             MoveTempItem(selectedFile);
-            var gObj = AssetDatabase.LoadAssetAtPath($"{MainController.basePath}/{MainController.STORED_ITEMS_PATH}/{selectedFile}", typeof(UnityEngine.Object)) as GameObject;
+            var gObj = AssetDatabase.LoadAssetAtPath($"{MainController.relativePath}/{MainController.STORED_ITEMS_PATH}/{selectedFile}", typeof(UnityEngine.Object)) as GameObject;
 
             if (gObj == null) return;
             var newObj = GameObject.Instantiate(gObj);
@@ -717,8 +715,7 @@ namespace LazyBuilder
             selectedItem = itemId;
             lastSessionItem = itemId;
             _tabImg.style.backgroundImage = icon;
-            var titleCapitalized = itemId.Substring(0, 1).ToUpper() + itemId.Substring(1);
-            _tabTitle.text = titleCapitalized;
+            _tabTitle.text = itemId.Capitalize();
 
 
             //_tabDropdown.choices.Clear();
@@ -753,8 +750,8 @@ namespace LazyBuilder
             //Debug.Log("Donwload prompted");
             //ft.GetWebFile();
         }
-        
-             private async void ItemTypeChanged(ChangeEvent<string> value)
+
+        private async void ItemTypeChanged(ChangeEvent<string> value)
         {
             if (string.IsNullOrEmpty(value.newValue)) return;
 
@@ -776,10 +773,10 @@ namespace LazyBuilder
             {
                 Debug.Log("Fetching item name" + filename);
                 AddTempItem($"{filename}.{fileFormat}");
-                await Fetcher.GitRawFile($"{selectedPool}/{selectedItem}", MainController.TEMP_ITEMS_PATH, filename, fileFormat);
+                await MainController.GetRawFile($"{selectedPool}/{selectedItem}", MainController.TEMP_ITEMS_PATH, filename, fileFormat);
             }
 
-            previewObj = AssetDatabase.LoadAssetAtPath($"{MainController.basePath}/{MainController.TEMP_ITEMS_PATH}/{selectedFile}", typeof(UnityEngine.Object)) as GameObject;
+            previewObj = AssetDatabase.LoadAssetAtPath($"{MainController.relativePath}/{MainController.TEMP_ITEMS_PATH}/{selectedFile}", typeof(UnityEngine.Object)) as GameObject;
 
             if (previewObj == null)
             {

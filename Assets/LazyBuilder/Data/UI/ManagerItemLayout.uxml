@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Button display-tooltip-when-elided="true" name="Item" style="margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px; border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; flex-direction: row; align-items: center; border-left-width: 0; border-right-width: 0; border-top-width: 1px; border-bottom-width: 1px; border-left-color: rgba(0, 0, 0, 0.51); border-right-color: rgba(0, 0, 0, 0.51); border-top-color: rgba(0, 0, 0, 0.51); border-bottom-color: rgba(0, 0, 0, 0.51);">
+        <ui:VisualElement name="Status" style="width: 10px; height: 10px; justify-content: flex-start; background-color: rgb(136, 255, 159); margin-right: 7px; border-top-left-radius: 8px; border-bottom-left-radius: 8px; border-top-right-radius: 8px; border-bottom-right-radius: 8px;" />
+        <ui:Label text="ID0" display-tooltip-when-elided="true" name="Id" />
+        <ui:VisualElement name="Spacer" style="flex-grow: 1;" />
+        <ui:Label text="10" display-tooltip-when-elided="true" name="Types" style="-unity-text-align: upper-left; align-items: center;" />
+        <ui:VisualElement name="Spacer" style="flex-grow: 1;" />
+        <ui:Label text="5" display-tooltip-when-elided="true" name="Tags" />
+    </ui:Button>
+</ui:UXML>

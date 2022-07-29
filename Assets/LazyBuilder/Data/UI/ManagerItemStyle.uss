@@ -1,0 +1,13 @@
+#Item {
+	background-color: #4D4D4D;
+}
+
+#Item:hover {
+	background-color: #5D5D5D;
+}
+
+#Item:active {
+	background-color: #858585;
+	/*color: black;*/
+
+}
