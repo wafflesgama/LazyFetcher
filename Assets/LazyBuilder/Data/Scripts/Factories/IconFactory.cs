@@ -211,8 +211,21 @@ namespace LazyBuilder
 
         public static async Task<Texture2D> GenerateModelPreviewFromPath(string filePath, int width = 64, int height = 64, bool shouldCloneModel = false, bool shouldIgnoreParticleSystems = true)
         {
+            AssetDatabase.Refresh();
             var obj = AssetDatabase.LoadAssetAtPath(filePath, typeof(GameObject)) as GameObject;
+
+            if(obj == null) return null;
+
             var instObj = GameObject.Instantiate(obj);
+
+            var renderer = instObj.GetComponent<MeshRenderer>();
+
+            foreach (var material in renderer.sharedMaterials)
+            {
+                material.SetColor("_EmissionColor", material.color);
+                material.SetFloat("_Glossiness", 0f);
+            }
+
             Texture2D preview = null;
             GenerateModelPreviewAsync((x) =>
             {
@@ -225,7 +238,7 @@ namespace LazyBuilder
                 await Task.Delay(100);
             }
 
-            GameObject.Destroy(instObj);
+            GameObject.DestroyImmediate(instObj);
             return preview;
         }
 

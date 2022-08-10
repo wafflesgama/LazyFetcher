@@ -18,7 +18,7 @@ namespace LazyBuilder
 
         public Task<string> GetRawString(string src, string fileName, string fileType);
 
-        public Task<Texture2D> GetImage(string src, string imgName, string imgType);
+        public Task<Texture2D> GetImage(string src, string imgName, string imgType= PathFactory.THUMBNAIL_TYPE);
 
     }
 }

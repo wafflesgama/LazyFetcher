@@ -8,18 +8,13 @@ namespace LazyBuilder
 {
     public class ServerData
     {
-        [JsonProperty("Pools")]
-        public List<Pool> Pools { get; set; }
-    }
-
-    public class Pool
-    {
         [JsonProperty("Id")]
         public string Id { get; set; }
 
         [JsonProperty("Items")]
         public List<Item> Items { get; set; }
     }
+
     public class Item
     {
         [JsonProperty("Id")]

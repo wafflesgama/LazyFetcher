@@ -77,7 +77,7 @@ namespace LazyBuilder
         }
 
 
-        public async Task<Texture2D> GetImage(string subPath, string imgName, string imgType)
+        public async Task<Texture2D> GetImage(string subPath, string imgName, string imgType= PathFactory.THUMBNAIL_TYPE)
         {
 
             var url = $"{gitRawPrefix}/{gitRepo}/{gitBranch}/{subPath}/{imgName}.{imgType}";

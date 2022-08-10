@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static LazyBuilder.PathFactory;
 
 namespace LazyBuilder
 {
@@ -18,8 +19,6 @@ namespace LazyBuilder
         private string lastSessionItemType;
         private bool lastSessionItemFlag;
 
-        private string selectedPool;
-        private int selectedPoolIndex;
         private string selectedItem;
         private string selectedFile;
 
@@ -102,12 +101,10 @@ namespace LazyBuilder
             SetupIcons();
             SetupCamera();
 
-            await MainController.FetchLazyData();
+            await MainController.FetchServerData();
 
-            selectedPoolIndex = 0;
-            selectedPool = MainController.lazyData.Pools[selectedPoolIndex].Id;
 
-            SetupItems(MainController.lazyData.Pools[selectedPoolIndex].Items);
+            SetupItems(MainController.lazyData.Items);
 
 
             //This infinite async loop ensures that the preview's camera is always rendered
@@ -156,7 +153,7 @@ namespace LazyBuilder
             // root.styleSheets.Add(Resources.Load<StyleSheet>("qtStyles"));
 
             // Loads and clones our VisualTree (eg. our UXML structure) inside the root.
-            var quickToolVisualTree = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath($"{MainController.relativePath}/{MainController.UI_PATH}/BuilderLayout.uxml", typeof(VisualTreeAsset));
+            var quickToolVisualTree = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath(PathFactory.BuildUiFilePath(PathFactory.BUILDER_LAYOUT_FILE), typeof(VisualTreeAsset));
             //var quickToolVisualTree = Resources.Load<VisualTreeAsset>("MainLayout");
             quickToolVisualTree.CloneTree(_root);
         }
@@ -226,10 +223,10 @@ namespace LazyBuilder
             {
                 //var template = Resources.Load<VisualTreeAsset>("LazyItem");
                 if (_itemTemplate == null)
-                    _itemTemplate = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath($"{MainController.relativePath}/{MainController.UI_PATH}/BuilderItemLayout.uxml", typeof(VisualTreeAsset));
+                    _itemTemplate = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath(PathFactory.BuildUiFilePath(PathFactory.BUILDER_ITEM_LAYOUT_FILE), typeof(VisualTreeAsset));
 
                 var element = _itemTemplate.CloneTree();
-                SetupButton(element, items[i].Id, i, $"{selectedPool}/{items[i].Id}");
+                SetupItem(element, items[i].Id, i, $"{PathFactory.DATA_FOLDER}/{items[i].Id}");
                 _grid.Add(element);
                 //await Task.Delay(1);
             }
@@ -239,7 +236,7 @@ namespace LazyBuilder
             //}
         }
 
-        private async void SetupButton(VisualElement element, string name, int index, string path)
+        private async void SetupItem(VisualElement element, string name, int index, string path)
         {
             element.name = name;
             var label = element.Query<Label>().First();
@@ -252,10 +249,11 @@ namespace LazyBuilder
 
             // var buttonIcon = button.Q(className: "quicktool-button-icon");
 
-            var texture = await MainController.GetImage(path, "thumbnail", "png");
+            var texture = await MainController.GetImage(path, PathFactory.THUMBNAIL_FILE, PathFactory.THUMBNAIL_TYPE);
 
 
-            button.style.backgroundImage = texture;
+            var imgHolder = button.Q("Img");
+            imgHolder.style.backgroundImage = texture;
 
             // Sets a basic tooltip to the button itself.
             button.tooltip = name;
@@ -278,7 +276,7 @@ namespace LazyBuilder
 
         private void SetupPreviewUtils()
         {
-            GameObject groundObj = AssetDatabase.LoadAssetAtPath($"{MainController.relativePath}/{MainController.MESHES_PATH}/ground.fbx", typeof(UnityEngine.Object)) as GameObject;
+            GameObject groundObj = AssetDatabase.LoadAssetAtPath(PathFactory.BuildMeshFilePath(PathFactory.GROUND_FILE), typeof(UnityEngine.Object)) as GameObject;
 
             if (groundObj == null)
             {
@@ -286,7 +284,7 @@ namespace LazyBuilder
                 return;
             }
             groundMesh = groundObj.GetComponent<MeshFilter>().sharedMesh;
-            groundMat = AssetDatabase.LoadAssetAtPath<Material>($"{MainController.relativePath}/{MainController.MATERIALS_PATH}/groundMat.mat");
+            groundMat = AssetDatabase.LoadAssetAtPath<Material>(PathFactory.BuildMaterialFilePath(PathFactory.GROUND_FILE));
         }
 
         private void SetupCamera()
@@ -469,7 +467,7 @@ namespace LazyBuilder
 
         private void GetTmpItems()
         {
-            string tmpPath = $"{MainController.absolutePath}/{MainController.relativePath}/{MainController.TEMP_ITEMS_PATH}";
+            string tmpPath = $"{PathFactory.absoluteProjectPath}/{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}";
             if (!Directory.Exists(tmpPath))
                 Directory.CreateDirectory(tmpPath);
 
@@ -511,7 +509,7 @@ namespace LazyBuilder
         {
             if (tempItems.Count >= tempArraySize)
             {
-                var filePath = $"{MainController.absolutePath}/{MainController.relativePath}/{MainController.TEMP_ITEMS_PATH}/{tempItems[0]}";
+                var filePath = $"{PathFactory.absoluteProjectPath}/{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}/{tempItems[0]}";
                 File.Delete(filePath);
                 File.Delete(filePath + ".meta");
                 tempItems.RemoveAt(0);
@@ -522,11 +520,11 @@ namespace LazyBuilder
 
         private void MoveTempItem(string itemName)
         {
-            var dir = $"{Application.dataPath}/{MainController.STORED_ITEMS_PATH}";
+            var dir = $"{Application.dataPath}/{PathFactory.STORED_ITEMS_PATH}";
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
-            AssetDatabase.MoveAsset($"{MainController.relativePath}/{MainController.TEMP_ITEMS_PATH}/{itemName}", $"{MainController.relativePath}/{MainController.STORED_ITEMS_PATH}/{itemName}");
+            AssetDatabase.MoveAsset($"{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}/{itemName}", $"{PathFactory.relativeToolPath}/{PathFactory.STORED_ITEMS_PATH}/{itemName}");
         }
 
         #endregion Temporary Items Buffer
@@ -535,7 +533,7 @@ namespace LazyBuilder
 
         private void Search()
         {
-            var initList = MainController.lazyData.Pools[selectedPoolIndex].Items;
+            var initList = MainController.lazyData.Items;
             var searchVal = _searchBar.value;
 
             if (String.IsNullOrWhiteSpace(searchVal))
@@ -622,7 +620,7 @@ namespace LazyBuilder
         private void Generate()
         {
             MoveTempItem(selectedFile);
-            var gObj = AssetDatabase.LoadAssetAtPath($"{MainController.relativePath}/{MainController.STORED_ITEMS_PATH}/{selectedFile}", typeof(UnityEngine.Object)) as GameObject;
+            var gObj = AssetDatabase.LoadAssetAtPath($"{PathFactory.relativeToolPath}/{PathFactory.STORED_ITEMS_PATH}/{selectedFile}", typeof(UnityEngine.Object)) as GameObject;
 
             if (gObj == null) return;
             var newObj = GameObject.Instantiate(gObj);
@@ -720,7 +718,7 @@ namespace LazyBuilder
 
             //_tabDropdown.choices.Clear();
 
-            _itemTypeDropdown.choices = MainController.lazyData.Pools[selectedPoolIndex].Items[index].TypeIds;
+            _itemTypeDropdown.choices = MainController.lazyData.Items[index].TypeIds;
 
             if (_itemTypeDropdown.choices.Count > 0 && !firstSelection)
                 _itemTypeDropdown.value = _itemTypeDropdown.choices[0];
@@ -773,10 +771,11 @@ namespace LazyBuilder
             {
                 Debug.Log("Fetching item name" + filename);
                 AddTempItem($"{filename}.{fileFormat}");
-                await MainController.GetRawFile($"{selectedPool}/{selectedItem}", MainController.TEMP_ITEMS_PATH, filename, fileFormat);
+                await MainController.GetRawFile($"{PathFactory.DATA_FOLDER}/{selectedItem}", PathFactory.TEMP_ITEMS_PATH, filename, fileFormat);
             }
 
-            previewObj = AssetDatabase.LoadAssetAtPath($"{MainController.relativePath}/{MainController.TEMP_ITEMS_PATH}/{selectedFile}", typeof(UnityEngine.Object)) as GameObject;
+            AssetDatabase.Refresh();
+            previewObj = AssetDatabase.LoadAssetAtPath($"{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}/{selectedFile}", typeof(UnityEngine.Object)) as GameObject;
 
             if (previewObj == null)
             {
