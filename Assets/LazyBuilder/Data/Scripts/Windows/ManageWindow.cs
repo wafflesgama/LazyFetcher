@@ -184,7 +184,7 @@ namespace LazyBuilder
 
             selectedItem = item;
 
-            _thumbnail.style.backgroundImage = await MainController.fetcher.GetImage($"{PathFactory.DATA_FOLDER}/{item.Id}", PathFactory.THUMBNAIL_FILE);
+            _thumbnail.style.backgroundImage = await MainController.fetcher.GetImage(PathFactory.BuildItemPath(item.Id), PathFactory.THUMBNAIL_FILE);
 
             _description.text = itemState.Item2;
 
@@ -353,7 +353,6 @@ namespace LazyBuilder
             cachedData = new ServerData();
 
             var serverPath = MainController.GetServerPath();
-            var pools = Directory.GetDirectories(serverPath);
 
             cachedData.Items = new List<Item>();
 
@@ -393,7 +392,7 @@ namespace LazyBuilder
         void AutoWriteData()
         {
             var serverPath = MainController.fetcher.GetSrcPath();
-            var filePath = $"{serverPath.AbsoluteFormat()}\\main.json";
+            var filePath = $"{serverPath.AbsoluteFormat()}\\{PathFactory.MAIN_FILE}.{PathFactory.MAIN_TYPE}";
 
             var rawData = JsonConvert.SerializeObject(cachedData);
 

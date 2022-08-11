@@ -14,6 +14,9 @@ namespace LazyBuilder
 
         public const string DATA_FOLDER = "general";
 
+        public const string MAIN_FILE = "general";
+        public const string MAIN_TYPE = "json";
+
         public const string THUMBNAIL_FILE = "thumbnail";
         public const string THUMBNAIL_TYPE = "png";
 
@@ -43,6 +46,9 @@ namespace LazyBuilder
             var currentPath = Path.GetDirectoryName(AssetDatabase.GetAssetPath(MonoScript.FromScriptableObject(scriptSource)));
             relativeToolPath = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(currentPath))).RelativeFormat();
         }
+
+        #region Local Paths
+
         public static string BuildUiFilePath(string fileName, bool layoutFile = true, bool absolute = false)
         {
             var rootPath = absolute ? absoluteProjectPath : relativeToolPath;
@@ -76,5 +82,22 @@ namespace LazyBuilder
 
             return path;
         }
+
+        #endregion Local Paths
+
+
+        #region Sub Paths
+
+        public static string BuildItemPath(string itemName, bool absolute = false)
+        {
+            var path = $"{DATA_FOLDER}/{itemName}";
+
+            if (absolute)
+                path = path.AbsoluteFormat();
+
+            return path;
+        }
+
+        #endregion Sub Paths
     }
 }

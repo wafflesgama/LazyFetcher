@@ -226,7 +226,7 @@ namespace LazyBuilder
                     _itemTemplate = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath(PathFactory.BuildUiFilePath(PathFactory.BUILDER_ITEM_LAYOUT_FILE), typeof(VisualTreeAsset));
 
                 var element = _itemTemplate.CloneTree();
-                SetupItem(element, items[i].Id, i, $"{PathFactory.DATA_FOLDER}/{items[i].Id}");
+                SetupItem(element, items[i].Id, i, PathFactory.BuildItemPath(items[i].Id));
                 _grid.Add(element);
                 //await Task.Delay(1);
             }
@@ -771,7 +771,7 @@ namespace LazyBuilder
             {
                 Debug.Log("Fetching item name" + filename);
                 AddTempItem($"{filename}.{fileFormat}");
-                await MainController.GetRawFile($"{PathFactory.DATA_FOLDER}/{selectedItem}", PathFactory.TEMP_ITEMS_PATH, filename, fileFormat);
+                await MainController.GetRawFile(PathFactory.BuildItemPath(selectedItem), PathFactory.TEMP_ITEMS_PATH, filename, fileFormat);
             }
 
             AssetDatabase.Refresh();
