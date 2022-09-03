@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -9,37 +9,51 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static LazyBuilder.PathFactory;
+using static LazyBuilder.ServerManager;
 
 namespace LazyBuilder
 {
 
     public class BuilderWindow : EditorWindow
     {
-        private string lastSessionItem;
-        private string lastSessionItemType;
-        private bool lastSessionItemFlag;
+        private BuilderPreferences preferences;
+        private Dictionary<string, Server> serverList;
 
         private string selectedItem;
         private string selectedFile;
 
-        private PreviewRenderUtility previewRenderUtility;
-        private Transform previewTransform;
+        private bool onlyLocalSearch;
 
         private VisualElement _root;
 
         private TextField _searchBar;
 
-        private DropdownField _poolsDropdown;
-        private VisualElement _poolsContainer;
-        private TextElement _poolSelected;
+        //Servers DropDown
+        private DropdownField _serversDropdown;
+        private VisualElement _serversDropContainer;
+        private TextElement _serverDropSelected;
+        private VisualElement _serverDropIcon;
 
+        private VisualElement _mainTabContainer;
+
+        //Servers Tab
+        private VisualElement _serversTabContainer;
+        private Button _serversBackBttn;
+        private VisualTreeAsset _serverTemplate;
+        private VisualElement _serversListContainer;
+        private Button _addServerBttn;
+        private Button _removeServerBttn;
+        private Button _saveServersBttn;
+        private VisualElement _saveServersIcon;
+        private VisualElement _selectedListServer;
+
+
+        private TextElement _mainTitle;
+        private VisualElement _mainImg;
 
         private VisualElement _itemTypeIcon;
         private DropdownField _itemTypeDropdown;
         private TextElement _itemTypeSelected;
-
-        private TextElement _tabTitle;
-        private VisualElement _tabImg;
 
         private VisualElement _colorPallete;
 
@@ -57,18 +71,26 @@ namespace LazyBuilder
         private StyleColor defaultButtonColor;
         private StyleColor activeButtonColor;
 
-        private Mesh groundMesh;
-        private Material groundMat;
         //private Material fallbackMat;
+
+        private PreviewRenderUtility previewRenderUtility;
+        private Transform previewTransform;
+        private bool renderPreview;
 
         private GameObject previewObj;
         private Mesh previewMesh;
         private Vector3 previewGroundPos;
 
+        private Mesh groundMesh;
+        private Material groundMat;
 
 
-        private List<string> tempItems;
+        //Temporary Items
+        private List<string> tempFiles;
         private const int tempArraySize = 5;
+
+        //Stored Items
+        private List<string> storedFiles;
 
 
         private Vector3 initPos;
@@ -80,37 +102,38 @@ namespace LazyBuilder
 
         private VisualTreeAsset _itemTemplate;
 
-
-        const string NEWPOOL_MSG = "Add new pool...";
+        //Messages
+        const string LOCALPOOL_MSG = "Local";
+        const string MAINPOOL_MSG = "Main";
+        const string NEWPOOL_MSG = "Edit servers...";
 
 
         #region Unity Functions
         private async void OnEnable()
         {
             InitVariables();
-
+            InitPreferences();
 
             SetupPreviewUtils();
 
-            GetTmpItems();
+            SetupStoredFiles();
+            SetupTempFiles();
+
             SetupBaseUI();
             SetupBindings();
             SetupCallbacks();
             SetupInputCallbacks();
 
+            SwitchPanel();
             SetupIcons();
             SetupCamera();
 
-            await MainController.FetchServerData();
-
-
-            SetupItems(MainController.lazyData.Items);
-
+            SetupServers();
 
             //This infinite async loop ensures that the preview's camera is always rendered
             RepaintCycle();
 
-            Debug.Log("Searcbar focus");
+            //Debug.Log("Searcbar focus");
             this.Focus();
             _searchBar.Focus();
         }
@@ -123,6 +146,7 @@ namespace LazyBuilder
         private void OnDestroy()
         {
             previewRenderUtility?.Cleanup();
+            UpdatePreferences();
         }
 
         private void OnGUI()
@@ -141,7 +165,6 @@ namespace LazyBuilder
             activeButtonColor = new Color(0.27f, 0.38f, 0.49f);
 
             MainController.Init(this);
-
         }
 
 
@@ -160,10 +183,15 @@ namespace LazyBuilder
 
         private void SetupBindings()
         {
-            _tabTitle = (TextElement)_root.Q("TitleText");
-            _tabImg = _root.Q("ItemThumbnail");
+            _mainTitle = (TextElement)_root.Q("TitleText");
+            _mainImg = _root.Q("ItemThumbnail");
             _searchBar = (TextField)_root.Q("SearchBar");
             _grid = _root.Q("ItemsColumn1");
+
+            _mainTabContainer = _root.Q("TabContent_Main");
+            _serversTabContainer = _root.Q("TabContent_Servers");
+
+            _serversBackBttn = (Button)_root.Q("Back_servers");
 
             _generateBttn = (Button)_root.Q("GenerateBttn");
             _generateBttnIcon = _root.Q("GenerateBttnIcon");
@@ -171,9 +199,18 @@ namespace LazyBuilder
             _zoomInBttn = (Button)_root.Q("ZoomIn");
             _zoomOutBttn = (Button)_root.Q("ZoomOut");
 
-            _poolsContainer = _root.Q("PoolsContainer");
-            _poolsDropdown = (DropdownField)_root.Q("PoolsList");
-            _poolSelected = (TextElement)_root.Q("PoolSelected");
+            //Servers Dropdown
+            _serversDropContainer = _root.Q("PoolsContainer");
+            _serversDropdown = (DropdownField)_root.Q("PoolsList");
+            _serverDropSelected = (TextElement)_root.Q("PoolSelected");
+            _serverDropIcon = _root.Q("ServerDropIcon");
+
+            //Servers Panel
+            _serversListContainer = _root.Q("ServersList");
+            _addServerBttn = (Button)_root.Q("AddServer");
+            _removeServerBttn = (Button)_root.Q("RemoveServer");
+            _saveServersBttn = (Button)_root.Q("SaveServersBttn");
+            _saveServersIcon = _root.Q("SaveServersIcon");
 
             _itemTypeIcon = _root.Q("ItemTypeIcon");
             _itemTypeSelected = (TextElement)_root.Q("ItemTypeSelected");
@@ -193,6 +230,8 @@ namespace LazyBuilder
             _itemTypeIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("icon dropdown").image;
             _zoomInBttn.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_Search Icon").image;
             _zoomOutBttn.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_Search Icon").image;
+            _serverDropIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_icon dropdown@2x").image;
+            _saveServersIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_SaveAs").image;
         }
 
         private void SetupCallbacks()
@@ -200,10 +239,17 @@ namespace LazyBuilder
             //Event.KeyboardEvent.Add()
             //Event.current.mousePosition
 
+            _serversBackBttn.clicked += () => SwitchPanel(true);
+
+
+            _addServerBttn.clicked += AddServer;
+            _removeServerBttn.clicked += RemoveServer;
+            _saveServersBttn.clicked += SaveEditServers;
+
             _generateBttn.clicked += Generate;
             //_searchBar.RegisterValueChangedCallback(SearchChanged);
             _itemTypeDropdown.RegisterValueChangedCallback(ItemTypeChanged);
-            _poolsDropdown.RegisterValueChangedCallback(PoolChanged);
+            _serversDropdown.RegisterValueChangedCallback(ServerChanged);
 
             _searchBttn.clicked += Search;
             _searchBar.RegisterCallback<FocusInEvent>(OnSearchFocusIn);
@@ -212,16 +258,15 @@ namespace LazyBuilder
             _zoomOutBttn.clicked += ZoomOut;
         }
 
-        private void SetupItems(List<Item> items)
+        private void SetupItems()
         {
             _grid.Clear();
 
-            //for (int j = 0; j < 10; j++)
-            //{
+            var items = ServerManager.data.Items;
 
             for (int i = 0; i < items.Count; i++)
             {
-                //var template = Resources.Load<VisualTreeAsset>("LazyItem");
+                if (onlyLocalSearch && !HasItemAnyType(items[i].Id)) continue; 
                 if (_itemTemplate == null)
                     _itemTemplate = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath(PathFactory.BuildUiFilePath(PathFactory.BUILDER_ITEM_LAYOUT_FILE), typeof(VisualTreeAsset));
 
@@ -231,9 +276,7 @@ namespace LazyBuilder
                 //await Task.Delay(1);
             }
 
-
-
-            //}
+            SelectDefaultItem();
         }
 
         private async void SetupItem(VisualElement element, string name, int index, string path)
@@ -249,11 +292,13 @@ namespace LazyBuilder
 
             // var buttonIcon = button.Q(className: "quicktool-button-icon");
 
-            var texture = await MainController.GetImage(path, PathFactory.THUMBNAIL_FILE, PathFactory.THUMBNAIL_TYPE);
-
+            var texture = await ServerManager.server.GetImage(path, PathFactory.THUMBNAIL_FILE, PathFactory.THUMBNAIL_TYPE);
 
             var imgHolder = button.Q("Img");
             imgHolder.style.backgroundImage = texture;
+
+            var iconOverlay = button.Q("Icon");
+            iconOverlay.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_Valid").image;
 
             // Sets a basic tooltip to the button itself.
             button.tooltip = name;
@@ -261,13 +306,28 @@ namespace LazyBuilder
             //Add Callback
             button.clicked += () => ItemSelected(name, index, texture);
 
-            if (lastSessionItem != null && lastSessionItem == name && !lastSessionItemFlag)
+            if (!HasItemAnyType(name))
             {
-                lastSessionItemFlag = true;
-                ItemSelected(name, index, texture, true);
-                _itemTypeDropdown.value = lastSessionItemType;
+                var overlay = button.Q("Overlay");
+                overlay.visible = false;
             }
 
+
+        }
+
+
+
+        private void SwitchPanel(bool mainView = true)
+        {
+            _mainTabContainer.style.display = mainView ? DisplayStyle.Flex : DisplayStyle.None;
+            renderPreview = mainView;
+
+            _serversTabContainer.style.display = !mainView ? DisplayStyle.Flex : DisplayStyle.None;
+
+            if (!mainView)
+            {
+                SetupEditServers();
+            }
         }
 
         #endregion Base UI
@@ -295,6 +355,7 @@ namespace LazyBuilder
                 previewRenderUtility.Cleanup();
                 previewRenderUtility = null;
             }
+            renderPreview = true;
 
             previewRenderUtility = new PreviewRenderUtility();
             previewTransform = previewRenderUtility.camera.transform;
@@ -325,9 +386,9 @@ namespace LazyBuilder
 
         private void RenderItemPreview()
         {
-            if (previewRenderUtility == null) return;
+            if (previewRenderUtility == null || !renderPreview) return;
 
-            Rect rect = _tabImg.worldBound;
+            Rect rect = _mainImg.worldBound;
 
             //previewRenderUtility.BeginStaticPreview(r);
             previewRenderUtility.BeginPreview(rect, GUIStyle.none);
@@ -406,8 +467,6 @@ namespace LazyBuilder
 
         private void OnKeyboardKeyDown(KeyDownEvent e)
         {
-            Debug.Log($"Key down {e.keyCode}");
-
             if (e.keyCode == KeyCode.Escape)
                 this.Close();
 
@@ -417,7 +476,7 @@ namespace LazyBuilder
                 _searchBar.Focus();
             }
 
-            else if (e.keyCode == KeyCode.Return && selectedItem != "")
+            else if ((e.keyCode == KeyCode.Return || e.character == '\n') && selectedFile != "")
             {
                 Generate();
             }
@@ -425,16 +484,16 @@ namespace LazyBuilder
 
         private void OnMouseKeyDown(MouseDownEvent e)
         {
-            Debug.Log($"On mouse down {e.button}");
+            //Debug.Log($"On mouse down {e.button}");
         }
 
         private void OnMouseWheelDown(WheelEvent e)
         {
             if (e.delta == Vector3.zero) return;
 
-            Debug.Log($"On mouse wheel scroll {e.delta}");
+            //Debug.Log($"On mouse wheel scroll {e.delta}");
 
-            if (CheckIfMouseOverSreen(_tabImg.worldBound, true, new Vector2(0, 20)))
+            if (CheckIfMouseOverSreen(_mainImg.worldBound, true, new Vector2(0, 20)))
             {
                 Zoom(e.delta.y);
             }
@@ -463,69 +522,122 @@ namespace LazyBuilder
         }
         #endregion IO
 
-        #region Temporary Items Buffer
 
-        private void GetTmpItems()
+        private async Task<string> GetItem(string itemId, string itemTypeId)
         {
-            string tmpPath = $"{PathFactory.absoluteProjectPath}/{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}";
-            if (!Directory.Exists(tmpPath))
-                Directory.CreateDirectory(tmpPath);
+            var filename = $"{itemId}_{itemTypeId}";
+            selectedFile = $"{filename}.{PathFactory.MESH_TYPE}";
 
-            DirectoryInfo tmpInfo = new DirectoryInfo(tmpPath);
-            FileInfo[] files = tmpInfo.GetFiles();
+            bool storedResult = HasStoredFile(selectedFile);
+            bool tempResult = HasTempFile(selectedFile);
 
-            string[] tmpFiles = files
-                .Where(x => !x.Extension.Contains("meta"))
-                .OrderBy(f => f.LastWriteTime)
-                .Select(f => f.Name)
-                .ToArray();
+            string path;
 
-            if (tempItems == null)
-                tempItems = new List<string>();
-
-            tempItems.Clear();
-            int minArrSize = Mathf.Min(tempArraySize, tmpFiles.Length);
-            for (int i = 0; i < minArrSize; i++)
-                tempItems.Add(tmpFiles[i]);
-
-            if (minArrSize > 0)
+            if (storedResult)
             {
-                var newestItem = tempItems.Last();
-                var nameSplitted = newestItem.Substring(0, newestItem.IndexOf('.')).Split('_');
-                lastSessionItem = nameSplitted[0];
-                lastSessionItemType = nameSplitted[1];
+                path = $"{PathFactory.relativeToolPath}/{PathFactory.STORED_ITEMS_PATH}/{selectedFile}";
             }
-        }
-
-        private (bool, int) HasTempItem(string itemName)
-        {
-            bool hasFile = tempItems.Contains(itemName);
-            int index = hasFile ? tempItems.IndexOf(itemName) : -1;
-
-            return (hasFile, index);
-        }
-
-        private void AddTempItem(string itemName)
-        {
-            if (tempItems.Count >= tempArraySize)
+            //If Temp file does not exist
+            else
             {
-                var filePath = $"{PathFactory.absoluteProjectPath}/{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}/{tempItems[0]}";
-                File.Delete(filePath);
-                File.Delete(filePath + ".meta");
-                tempItems.RemoveAt(0);
+                if (!tempResult)
+                {
+                    Debug.Log("Fetching item name" + filename);
+
+                    //Fetch File from server and add to Temp list
+                    await ServerManager.server.GetRawFile(PathFactory.BuildItemPath(selectedItem), PathFactory.TEMP_ITEMS_PATH, filename, PathFactory.MESH_TYPE);
+                    AddTempFile(selectedFile);
+                }
+                path = $"{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}/{selectedFile}";
             }
 
-            tempItems.Add(itemName);
+            AssetDatabase.Refresh();
+            return path;
         }
 
-        private void MoveTempItem(string itemName)
+
+        #region Stored Files Buffer
+
+        private bool HasItemAnyType(string itemId)
+        {
+            return storedFiles.Where(x => x.StartsWith(itemId)).Any();
+        }
+        private void StoreTempFile(string id)
         {
             var dir = $"{Application.dataPath}/{PathFactory.STORED_ITEMS_PATH}";
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
-            AssetDatabase.MoveAsset($"{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}/{itemName}", $"{PathFactory.relativeToolPath}/{PathFactory.STORED_ITEMS_PATH}/{itemName}");
+            AssetDatabase.MoveAsset($"{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}/{id}", $"{PathFactory.relativeToolPath}/{PathFactory.STORED_ITEMS_PATH}/{id}");
+
+            RemoveTempFile(id);
         }
+
+
+        private bool HasStoredFile(string id)
+        {
+            return storedFiles.Contains(id);
+        }
+        private void SetupStoredFiles()
+        {
+            string tmpPath = $"{PathFactory.absoluteToolPath}\\{PathFactory.STORED_ITEMS_PATH}";
+
+            storedFiles = new List<string>(Utils.GetFiles(tmpPath, true));
+
+        }
+
+        #endregion Stored Files Buffer
+
+        #region Temporary Files Buffer
+
+        private void SetupTempFiles()
+        {
+            string tmpPath = $"{PathFactory.absoluteToolPath}\\{PathFactory.TEMP_ITEMS_PATH}";
+            string[] allFiles = Utils.GetFiles(tmpPath, true);
+
+
+            if (tempFiles == null)
+                tempFiles = new List<string>();
+            tempFiles.Clear();
+
+            //Add items to Temp files list at the maximum size of 'tempArraySize'
+            int minArrSize = Mathf.Min(tempArraySize, allFiles.Length);
+            for (int i = 0; i < minArrSize; i++)
+                tempFiles.Add(allFiles[i]);
+
+        }
+
+        private bool HasTempFile(string id)
+        {
+            bool hasFile = tempFiles.Contains(id);
+            //int index = hasFile ? tempItems.IndexOf(id) : -1;
+
+            return hasFile;
+        }
+
+        private void AddTempFile(string id)
+        {
+            // If exceeds the buffer limit - delete the 1st element
+            if (tempFiles.Count >= tempArraySize)
+                RemoveTempFile(tempFiles[0]);
+
+            tempFiles.Add(id);
+        }
+
+        private void RemoveTempFile(string id)
+        {
+            var filePath = $"{PathFactory.absoluteToolPath}\\{PathFactory.TEMP_ITEMS_PATH}\\{id}";
+
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+                File.Delete(filePath + ".meta");
+            }
+
+            tempFiles.Remove(id);
+        }
+
+
 
         #endregion Temporary Items Buffer
 
@@ -533,15 +645,15 @@ namespace LazyBuilder
 
         private void Search()
         {
-            var initList = MainController.lazyData.Items;
+            var initList = ServerManager.data.Items;
             var searchVal = _searchBar.value;
 
             if (String.IsNullOrWhiteSpace(searchVal))
-                SetupItems(initList);
+                SetupItems();
             else
             {
                 var searchedList = FuzzySearch(initList, searchVal);
-                SetupItems(searchedList);
+                SetupItems();
             }
         }
 
@@ -587,14 +699,14 @@ namespace LazyBuilder
         private void OnSearchFocusIn(FocusInEvent focus)
         {
             isSearchFocused = true;
-            _poolsContainer.style.backgroundColor = activeButtonColor;
+            _serversDropContainer.style.backgroundColor = activeButtonColor;
             _searchBttn.style.backgroundColor = activeButtonColor;
         }
 
         private void OnSearchFocusOut(FocusOutEvent focus)
         {
             isSearchFocused = false;
-            _poolsContainer.style.backgroundColor = defaultButtonColor;
+            _serversDropContainer.style.backgroundColor = defaultButtonColor;
             _searchBttn.style.backgroundColor = defaultButtonColor;
         }
         #endregion Items Search
@@ -619,7 +731,7 @@ namespace LazyBuilder
 
         private void Generate()
         {
-            MoveTempItem(selectedFile);
+            StoreTempFile(selectedFile);
             var gObj = AssetDatabase.LoadAssetAtPath($"{PathFactory.relativeToolPath}/{PathFactory.STORED_ITEMS_PATH}/{selectedFile}", typeof(UnityEngine.Object)) as GameObject;
 
             if (gObj == null) return;
@@ -705,77 +817,60 @@ namespace LazyBuilder
         #endregion Colour Picker
 
         #region Item & Type Change
-        private void ItemSelected(string itemId, int index, Texture2D icon, bool firstSelection = false)
+        private void ItemSelected(string itemId, int index, Texture2D icon = null, bool manualTypeSelect = false)
         {
             if (selectedItem == itemId) return;
 
-            //Debug.Log($"ClickedItem {itemId}");
+            preferences.LastItem = itemId;
+
+
             selectedItem = itemId;
-            lastSessionItem = itemId;
-            _tabImg.style.backgroundImage = icon;
-            _tabTitle.text = itemId.Capitalize();
+            //lastSessionItem = itemId;
+            _mainImg.style.backgroundImage = icon;
+            _mainTitle.text = itemId.Capitalize();
 
+            var choices = ServerManager.data.Items[index].TypeIds;
 
-            //_tabDropdown.choices.Clear();
+            for (int i = 0; i < choices.Count; i++)
+            {
+                if (HasStoredFile($"{itemId}_{choices[i]}.{PathFactory.MESH_TYPE}"))
+                    choices[i] = $"{choices[i]}\t✓";
+            }
 
-            _itemTypeDropdown.choices = MainController.lazyData.Items[index].TypeIds;
+            _itemTypeDropdown.choices = choices;
 
-            if (_itemTypeDropdown.choices.Count > 0 && !firstSelection)
+            if (_itemTypeDropdown.choices.Count > 0 && !manualTypeSelect)
                 _itemTypeDropdown.value = _itemTypeDropdown.choices[0];
 
-            //var oldPos = previewRenderUtility.camera.transform.position;
-
-            //if (initSet)
-            //initPos = previewRenderUtility.camera.transform.position;
 
             setDist = true;
-            //Debug.Log($" oldPos {oldPos}");
-            //Debug.Log($" newPos {initPos}");
-
-
-            //previewRenderUtility.camera.transform.position = initPos;
-            //previewRenderUtility.camera.transform.position = new Vector3(0, 10.5f, -18);
-            //previewRenderUtility.camera.transform.position= new Vector3(0, 10.5f, -18);
-            //previewMesh.bounds.
-            //edit added Instantiation using your variable for clarity
-            //UnityEngine.Object go;
-            //if (_asset != null)
-            //{
-            //    go = Instantiate(_asset, Vector3.zero, Quaternion.identity);
-            //    go.name = "ye";
-            //}
-            //var ft = new Fetcher();
-            //Debug.Log("Donwload prompted");
-            //ft.GetWebFile();
         }
 
-        private async void ItemTypeChanged(ChangeEvent<string> value)
+        private void ItemTypeChanged(ChangeEvent<string> value) => ItemTypeSelected(value.newValue);
+        private async void ItemTypeSelected(string value)
         {
-            if (string.IsNullOrEmpty(value.newValue)) return;
 
+            //If Type contains a symbol - trim it to get the true Id
+            if (value.Contains('\t'))
+            {
+                value = value.Substring(0, value.IndexOf('\t'));
+            }
 
+            if (string.IsNullOrEmpty(value)) return;
+
+            //Update Preferences
+            preferences.LastItemType = value;
+            UpdatePreferences();
+
+            //Reset Mesh Preview
             previewObj = null;
             previewMesh = null;
             previewMats = null;
 
-            _itemTypeSelected.text = value.newValue;
-            lastSessionItemType = value.newValue;
+            _itemTypeSelected.text = value;
 
-            var filename = $"{selectedItem}_{value.newValue}";
-            var fileFormat = "fbx";
-
-            selectedFile = $"{filename}.{fileFormat}";
-
-            (bool, int) result = HasTempItem(selectedFile);
-            if (!result.Item1)
-            {
-                Debug.Log("Fetching item name" + filename);
-                AddTempItem($"{filename}.{fileFormat}");
-                await MainController.GetRawFile(PathFactory.BuildItemPath(selectedItem), PathFactory.TEMP_ITEMS_PATH, filename, fileFormat);
-            }
-
-            AssetDatabase.Refresh();
-            previewObj = AssetDatabase.LoadAssetAtPath($"{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}/{selectedFile}", typeof(UnityEngine.Object)) as GameObject;
+            string objPath = await GetItem(selectedItem, value);
+            previewObj = AssetDatabase.LoadAssetAtPath(objPath, typeof(UnityEngine.Object)) as GameObject;
 
             if (previewObj == null)
             {
@@ -788,7 +883,7 @@ namespace LazyBuilder
             previewMats = meshRend.sharedMaterials;
             previewColors = new List<Color>();
 
-            //make materials not glossy/shiny
+            //Make all materials not glossy
             foreach (var material in previewMats)
             {
                 material.SetColor("_EmissionColor", material.color);
@@ -797,14 +892,14 @@ namespace LazyBuilder
 
             }
 
-            //Add color pickers
+            //Add respective color pickers
             _colorPallete.Clear();
             for (int i = 0; i < previewColors.Count; i++)
             {
                 var field = CreateColorPicker(previewColors[i]);
                 _colorPallete.Add(field);
-
             }
+
             previewMesh = previewObj.gameObject.GetComponent<MeshFilter>().sharedMesh;
             previewGroundPos = new Vector3(previewMesh.bounds.center.x, previewMesh.bounds.min.y, previewMesh.bounds.center.z);
 
@@ -822,27 +917,187 @@ namespace LazyBuilder
 
             previewRenderUtility.camera.transform.RotateAround(previewMesh.bounds.center, Vector3.up, Time.deltaTime);
             await Task.Delay(2);
+
+            //If camera has been destroyed while waiting - return
+            if (previewRenderUtility == null || previewRenderUtility.camera == null) return;
+
             var targetPosition = bounds.center - distance * previewRenderUtility.camera.transform.forward;
             previewRenderUtility.camera.transform.position = targetPosition;
 
             //Debug.Log($"Max bounds {maxSize}");
         }
+
+
+        private void SelectDefaultItem()
+        {
+            if (preferences.LastItem != null && preferences.LastItemType != null)
+            {
+                var index = ServerManager.data.Items.TakeWhile(x => x.Id != preferences.LastItem).Count();
+
+                //Manual selection set to 'true' to avoid auto selecting a typeId 
+                ItemSelected(preferences.LastItem, index, null, true);
+                ItemTypeSelected(preferences.LastItemType);
+            }
+        }
         #endregion Item & Type Change
 
-        #region Item Pools 
-        private void PoolChanged(ChangeEvent<string> value)
+        #region Manage Servers
+        private void SetupServers()
         {
-            var newPool = value.newValue;
+            serverList = new Dictionary<string, Server>();
 
-            if (newPool == NEWPOOL_MSG)
+            serverList.Add(LOCALPOOL_MSG, null);
+
+            //If Server preferences are not empty
+            if (preferences.Servers_src != null && preferences.Servers_Id != null)
             {
+                //Load Servers from preferences
+                for (int i = 0; i < preferences.Servers_Id.Count; i++)
+                {
+                    var server = ServerManager.CreateServer(preferences.Servers_Type[i], preferences.Servers_src[i], preferences.Servers_branch[i]);
+                    serverList.Add(preferences.Servers_Id[i], server);
+                }
+            }
+            else
+            {
+                //Add Default server
+                var server = ServerManager.CreateServer(ServerType.GIT, Server_Git.defaultRepo, Server_Git.defaultBranch);
+
+                //Add preferency entry
+                preferences.Servers_Id = new List<string>() { MAINPOOL_MSG };
+                preferences.Servers_Type = new List<ServerType>() { ServerType.GIT };
+                preferences.Servers_src = new List<string> { Server_Git.defaultRepo };
+                preferences.Servers_branch = new List<string> { Server_Git.defaultBranch };
+
+                //Add server
+                serverList.Add(MAINPOOL_MSG, server);
+            }
+
+            //If last server not set - set it to the Main server
+            if (preferences.LastServer == null || !serverList.ContainsKey(preferences.LastServer))
+            {
+                preferences.LastServer = MAINPOOL_MSG;
+            }
+
+            serverList.Add(NEWPOOL_MSG, null);
+            _serversDropdown.choices = serverList.Keys.ToList();
+            _serversDropdown.value = preferences.LastServer;
+        }
+
+
+
+        private void SetupEditServers()
+        {
+            _serversListContainer.Clear();
+
+            foreach (var server in serverList)
+            {
+                if (server.Value == null) continue;
+
+                ServerType type = ServerType.GIT;
+                if (server.Value is Server_Local)
+                    type = ServerType.LOCAL;
+
+                CreateServerEntry(type, server.Key, server.Value.GetSrc(), server.Value.GetBranch());
+            }
+        }
+
+        private void SaveEditServers()
+        {
+
+        }
+        private void AddServer()
+        {
+            CreateServerEntry(ServerType.GIT, null, null);
+        }
+
+        private void CreateServerEntry(ServerType type, string id = null, string src = null, string branch = null)
+        {
+            if (_serverTemplate == null)
+                _serverTemplate = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath(PathFactory.BuildUiFilePath(PathFactory.BUILDER_SERVER_ITEM_FILE), typeof(VisualTreeAsset));
+
+            var element = _serverTemplate.CloneTree();
+
+            var idField = (TextField)element.Q("Id");
+            if (id != null) idField.value = id;
+            idField.RegisterCallback<FocusEvent>((x) => { _selectedListServer = element; });
+
+            var branchField = (TextField)element.Q("Branch");
+            if (branch != null) branchField.value = branch;
+
+            var typesField = (DropdownField)element.Q("Type");
+            typesField.choices = GetServerTypes();
+            typesField.RegisterValueChangedCallback(x =>
+            {
+                branchField.visible = x.newValue == ServerType.LOCAL.ToString();
+
+            });
+
+            var srcField = (TextField)element.Q("Src");
+            if (src != null) srcField.value = src;
+            srcField.RegisterCallback<FocusEvent>((x) => { _selectedListServer = element; });
+
+            typesField.value = type.ToString();
+
+            _serversListContainer.Add(element);
+        }
+
+        private void RemoveServer()
+        {
+            if (_selectedListServer == null) return;
+
+            _serversListContainer.Remove(_selectedListServer);
+
+            _selectedListServer = null;
+        }
+
+
+        private async void ServerChanged(ChangeEvent<string> value)
+        {
+            var newServer = value.newValue;
+
+            if (newServer == NEWPOOL_MSG)
+            {
+                SwitchPanel(false);
                 return;
             }
 
-            _poolSelected.text = newPool;
+           Server currentServer= serverList[newServer];  
+           ServerManager.SetServer(currentServer);
+
+            await ServerManager.FetchServerData();
+
+
+            SwitchPanel(true);
+            _serverDropSelected.text = newServer;
+
+            
+            onlyLocalSearch = newServer == LOCALPOOL_MSG;
+            SetupItems();
+
+            preferences.LastServer = newServer;
+            UpdatePreferences();
+        }
+
+        #endregion Manage Servers
+
+        #region Preferences
+
+        private void InitPreferences()
+        {
+            preferences = new BuilderPreferences();
+            preferences = PreferenceManager.LoadPreference<BuilderPreferences>(PathFactory.BUILDER_PREFS_FILE);
+
+            if (preferences == null)
+                preferences = new BuilderPreferences();
+        }
+
+        private void UpdatePreferences()
+        {
+            PreferenceManager.SavePreference(PathFactory.BUILDER_PREFS_FILE, preferences);
 
         }
 
-        #endregion Item Pools
+        #endregion Preferences
     }
 }

@@ -8,21 +8,25 @@ namespace LazyBuilder
 {
     public class PathFactory
     {
-        public static string absoluteProjectPath { get; set; }
+        public static string absoluteToolPath { get; set; }
         public static string relativeToolPath { get; set; }
 
 
-        public const string DATA_FOLDER = "general";
+        public const string DATA_FOLDER = "content";
 
-        public const string MAIN_FILE = "general";
+        public const string MAIN_FILE = "data";
         public const string MAIN_TYPE = "json";
 
         public const string THUMBNAIL_FILE = "thumbnail";
         public const string THUMBNAIL_TYPE = "png";
 
+        public const string PREFS_PATH = "Data/Preferences";
+        public const string BUILDER_PREFS_FILE = "Builder";
+        public const string MANAGER_PREFS_FILE = "Manager";
+
         public const string TEMP_ITEMS_PATH = "Data/Temp/Items";
         public const string TEMP_THUMB_PATH = "Data/Temp/Thumbnails";
-        public const string STORED_ITEMS_PATH = "Data/Items";
+        public const string STORED_ITEMS_PATH = "Items";
         public const string UI_PATH = "Data/UI";
         public const string MESHES_PATH = "Data/Meshes";
         public const string MATERIALS_PATH = "Data/Materials";
@@ -34,6 +38,7 @@ namespace LazyBuilder
         public const string MANAGER_ITEM_LAYOUT_FILE = "ManagerItemLayout";
         public const string BUILDER_LAYOUT_FILE = "BuilderLayout";
         public const string BUILDER_ITEM_LAYOUT_FILE = "BuilderItemLayout";
+        public const string BUILDER_SERVER_ITEM_FILE = "BuilderServerItem";
 
         public const string MESH_TYPE = "fbx";
         public const string MATERIAL_TYPE = "mat";
@@ -42,16 +47,17 @@ namespace LazyBuilder
 
         public static void Init(ScriptableObject scriptSource)
         {
-            absoluteProjectPath = Path.GetDirectoryName(Application.dataPath);
             var currentPath = Path.GetDirectoryName(AssetDatabase.GetAssetPath(MonoScript.FromScriptableObject(scriptSource)));
             relativeToolPath = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(currentPath))).RelativeFormat();
+
+            absoluteToolPath = $"{Path.GetDirectoryName(Application.dataPath)}\\{relativeToolPath}";
         }
 
         #region Local Paths
 
         public static string BuildUiFilePath(string fileName, bool layoutFile = true, bool absolute = false)
         {
-            var rootPath = absolute ? absoluteProjectPath : relativeToolPath;
+            var rootPath = absolute ? absoluteToolPath : relativeToolPath;
             var fileType = layoutFile ? LAYOUT_TYPE : STYLE_TYPE;
             var path = $"{rootPath}/{UI_PATH}/{fileName}.{fileType}";
 
@@ -63,7 +69,7 @@ namespace LazyBuilder
 
         public static string BuildMeshFilePath(string fileName, bool absolute = false)
         {
-            var rootPath = absolute ? absoluteProjectPath : relativeToolPath;
+            var rootPath = absolute ? absoluteToolPath : relativeToolPath;
             var path = $"{rootPath}/{MESHES_PATH}/{fileName}.{MESH_TYPE}";
 
             if (absolute)
@@ -74,11 +80,12 @@ namespace LazyBuilder
 
         public static string BuildMaterialFilePath(string fileName, bool absolute = false)
         {
-            var rootPath = absolute ? absoluteProjectPath : relativeToolPath;
+            var rootPath = absolute ? absoluteToolPath : relativeToolPath;
             var path = $"{rootPath}/{MATERIALS_PATH}/{fileName}.{MATERIAL_TYPE}";
 
             if (absolute)
                 path = path.AbsoluteFormat();
+            
 
             return path;
         }

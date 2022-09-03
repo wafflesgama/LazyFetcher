@@ -11,7 +11,7 @@ namespace LazyBuilder
 {
     public class ManageWindow : EditorWindow
     {
-
+        private ManagerPreferences preferences;
         private ServerData cachedData;
 
         private Item selectedItem;
@@ -44,23 +44,36 @@ namespace LazyBuilder
 
         private string loadedPath;
 
+        const string NOENTRY_MSG = "This item has no entry in the JSON file";
+        const string NODATA_MSG = "This JSON entry has no data";
+        const string NOTAGS_MSG = "This item does not have any tags";
+        const string NOTYPES_MSG = "This item does not have any types";
+        const string NOMATCHTYPES_MSG = "The item types do not match the JSON entry";
+        const string OK_MSG = "All fields are correct";
+
         #region Unity Functions
 
         private async void OnEnable()
         {
             MainController.Init(this);
 
-            await MainController.FetchServerData();
-
-            ReadCachedData();
+            InitPreferences();
 
             SetupBaseUI();
             SetupBindings();
             SetupCallbacks();
             SetupInputCallbacks();
 
-            _serverPath.value = MainController.GetServerPath();
-            loadedPath = MainController.GetServerPath();
+            if (preferences.LastServerSrc != null)
+            {
+
+                ServerManager.SetServer(ServerManager.CreateServer(ServerManager.ServerType.LOCAL, preferences.LastServerSrc, null));
+                await ServerManager.FetchServerData();
+                ReadCachedData();
+
+                loadedPath = ServerManager.server.GetFullPath();
+                _serverPath.value = loadedPath;
+            }
 
             SetupItems();
 
@@ -118,9 +131,8 @@ namespace LazyBuilder
         {
             _list.Clear();
 
-
             //Duplicating list
-            var mergedItems = MainController.lazyData.Items.ToList();
+            var mergedItems = ServerManager.data.Items.ToList();
             mergedItems.AddRange(cachedData.Items);
 
             //Removing duplicate (same Id) Items between cached and Server Data & sorts alphab
@@ -184,7 +196,7 @@ namespace LazyBuilder
 
             selectedItem = item;
 
-            _thumbnail.style.backgroundImage = await MainController.fetcher.GetImage(PathFactory.BuildItemPath(item.Id), PathFactory.THUMBNAIL_FILE);
+            _thumbnail.style.backgroundImage = await ServerManager.server.GetImage(PathFactory.BuildItemPath(item.Id), PathFactory.THUMBNAIL_FILE);
 
             _description.text = itemState.Item2;
 
@@ -269,25 +281,25 @@ namespace LazyBuilder
         private (int, string) CheckItemState(Item item)
         {
 
-            if (!MainController.lazyData.Items.Contains(item))
-                return (1, "This item has no entry in the JSON file");
+            if (!ServerManager.data.Items.Contains(item))
+                return (1, NOENTRY_MSG);
 
             var cachedItem = cachedData.Items.Where(x => x.Id == item.Id).FirstOrDefault();
             if (cachedItem == null)
-                return (3, "This JSON entry has no data");
+                return (3, NODATA_MSG);
 
             if (item.Tags == null || item.Tags.Count == 0)
-                return (2, "This item does not have any tags");
+                return (2, NOTAGS_MSG);
 
             if (item.TypeIds == null || item.TypeIds.Count == 0)
-                return (2, "This item does not have any types");
+                return (2, NOTYPES_MSG);
 
 
 
             if (item.TypeIds.Count != cachedItem.TypeIds.Count)
-                return (2, "The item types do not match the JSON entry");
+                return (2, NOMATCHTYPES_MSG);
 
-            return (0, "All fields are correct");
+            return (0, OK_MSG);
         }
 
 
@@ -302,8 +314,8 @@ namespace LazyBuilder
                 return;
             }
 
-            MainController.fetcher = new Fetcher_Local(_serverPath.value);
-            var result = await MainController.FetchServerData();
+            ServerManager.SetServer(ServerManager.CreateServer(ServerManager.ServerType.LOCAL, _serverPath.value, null));
+            var result = await ServerManager.FetchServerData();
             if (!result)
             {
                 _serverPath.value = loadedPath;
@@ -319,9 +331,7 @@ namespace LazyBuilder
         {
             if (selectedItem == null) return;
 
-
-
-            var path = $"{MainController.fetcher.GetSrcPath()}\\{PathFactory.DATA_FOLDER}\\{selectedItem.Id}";
+            var path = $"{loadedPath}\\{PathFactory.DATA_FOLDER}\\{selectedItem.Id}";
             System.Diagnostics.Process.Start("explorer.exe", "/open, " + path);
 
         }
@@ -338,7 +348,7 @@ namespace LazyBuilder
 
             if (firstType == null) return;
 
-            await Utils.CreateThumbnailFromModelAsync($"{MainController.fetcher.GetSrcPath()}\\{PathFactory.DATA_FOLDER}\\{selectedItem.Id}", $"{selectedItem.Id}_{firstType}");
+            await Utils.CreateThumbnailFromModelAsync($"{loadedPath}\\{PathFactory.DATA_FOLDER}\\{selectedItem.Id}", $"{selectedItem.Id}_{firstType}");
 
             //Refresh Item Info
             OnItemCliked(selectedItem);
@@ -352,11 +362,12 @@ namespace LazyBuilder
         {
             cachedData = new ServerData();
 
-            var serverPath = MainController.GetServerPath();
 
+
+            cachedData.Id = ServerManager.data.Id;
             cachedData.Items = new List<Item>();
 
-            var items = Directory.GetDirectories($"{serverPath}/{PathFactory.DATA_FOLDER}");
+            var items = Directory.GetDirectories($"{loadedPath}/{PathFactory.DATA_FOLDER}");
             foreach (var itemNameFull in items)
             {
                 var itemName = Path.GetFileName(itemNameFull);
@@ -364,12 +375,15 @@ namespace LazyBuilder
                 Item item = new Item();
                 item.Id = itemName;
                 item.TypeIds = new List<string>();
-                //item.Tags = MainController.lazyData.Pools.
 
-                var types = Directory.GetFiles($"{serverPath}/{PathFactory.DATA_FOLDER}/{itemName}");
+                // Adds Tags from correspoding server's Item
+                var crspServerItem = ServerManager.data.Items.Where(x => x.Id == itemName).FirstOrDefault();
+                item.Tags = crspServerItem == null ? new List<string>() : crspServerItem.Tags;
+
+                var types = Directory.GetFiles($"{loadedPath}/{PathFactory.DATA_FOLDER}/{itemName}");
                 foreach (var typeNameComplete in types)
                 {
-                    //Removing prefix -> ItemName_TypeName
+                    //Removing prefix ItemName in -> ItemName_TypeName.format
                     var typeName = Path.GetFileName(typeNameComplete);
 
                     if (typeName.StartsWith(PathFactory.THUMBNAIL_FILE)) continue;
@@ -380,8 +394,12 @@ namespace LazyBuilder
                         continue;
                     }
 
+                    //Removing "_" in -> _TypeName.format
                     var typeNameTrimmed = typeName.Replace(itemName + "_", "");
+
+                    //Removing .format in -> TypeName.format
                     typeNameTrimmed = typeNameTrimmed.Remove(typeNameTrimmed.IndexOf('.'));
+
                     item.TypeIds.Add(typeNameTrimmed);
                 }
                 cachedData.Items.Add(item);
@@ -391,10 +409,13 @@ namespace LazyBuilder
 
         void AutoWriteData()
         {
-            var serverPath = MainController.fetcher.GetSrcPath();
-            var filePath = $"{serverPath.AbsoluteFormat()}\\{PathFactory.MAIN_FILE}.{PathFactory.MAIN_TYPE}";
+            this.ShowNotification(new GUIContent("Data filled successfully!"), 1);
+            return;
 
-            var rawData = JsonConvert.SerializeObject(cachedData);
+
+            var filePath = $"{loadedPath.AbsoluteFormat()}\\{PathFactory.MAIN_FILE}.{PathFactory.MAIN_TYPE}";
+
+            var rawData = JsonConvert.SerializeObject(cachedData, Formatting.Indented);
 
             if (File.Exists(filePath))
                 File.Delete(filePath);
@@ -403,7 +424,29 @@ namespace LazyBuilder
 
         }
 
+
+
         #endregion Read Cached Folder Data
 
+
+        #region Preferences
+
+        private void InitPreferences()
+        {
+            preferences = new ManagerPreferences();
+            preferences = PreferenceManager.LoadPreference<ManagerPreferences>(PathFactory.MANAGER_PREFS_FILE);
+
+            if (preferences == null)
+                preferences = new ManagerPreferences();
+
+        }
+
+        private void UpdatePreferences()
+        {
+            PreferenceManager.SavePreference(PathFactory.MANAGER_PREFS_FILE, preferences);
+
+        }
+
+        #endregion Preferences
     }
 }

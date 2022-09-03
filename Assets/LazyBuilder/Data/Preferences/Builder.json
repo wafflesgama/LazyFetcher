@@ -1,0 +1,17 @@
+{
+  "LastServer": null,
+  "LastItem": "house",
+  "LastItemType": "type10",
+  "ServersType": [
+    0
+  ],
+  "ServersId": [
+    "Main"
+  ],
+  "ServersSrc": [
+    "wafflesgama/LazyBuilderData"
+  ],
+  "ServersBranch": [
+    "main"
+  ]
+}

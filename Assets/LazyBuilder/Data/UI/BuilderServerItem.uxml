@@ -1,0 +1,14 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="Server" style="flex-direction: column; margin-bottom: 10px;">
+        <ui:VisualElement style="flex-direction: row;">
+            <ui:TextField picking-mode="Ignore" text="Main" readonly="false" name="Id" style="flex-grow: 1; max-width: 120px; margin-bottom: 2px; opacity: 1;" />
+            <ui:VisualElement style="flex-grow: 1;" />
+            <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="Type" />
+        </ui:VisualElement>
+        <ui:TextField picking-mode="Ignore" text="src" readonly="false" multiline="false" name="Src" style="flex-grow: 1; font-size: 9px; padding-top: 0; padding-bottom: 0;" />
+        <ui:VisualElement style="flex-direction: row;">
+            <ui:TextField picking-mode="Ignore" text="main" readonly="false" multiline="false" name="Branch" style="flex-grow: 1; font-size: 9px; padding-top: 0; padding-bottom: 0;" />
+            <ui:VisualElement style="flex-grow: 1;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

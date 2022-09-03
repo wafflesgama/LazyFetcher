@@ -16,14 +16,11 @@ namespace LazyBuilder
     public class MainController : EditorWindow
     {
 
-        public static Fetcher fetcher;
-        public static ServerData lazyData { get; private set; }
         public static SceneView sceneWindow { get; private set; }
 
 
         public static void Init(ScriptableObject scriptSource)
         {
-            fetcher = new Fetcher_Local($"C:\\Projects\\LazyBuilder\\LazyBuilderData");
             PathFactory.Init(scriptSource);
         }
 
@@ -49,57 +46,18 @@ namespace LazyBuilder
             window.Show();
         }
 
+        //[MenuItem("Tools/Lazy Builder/Test #t")]
+        //private static void Test()
+        //{
+          
+        //}
+
         private static void GetSceneWindow()
         {
             if (sceneWindow != null) return;
 
             sceneWindow = GetWindow<SceneView>();
         }
-
-
-
-        public static async Task<bool> FetchServerData()
-        {
-            try
-            {
-                var rawData = await fetcher.GetRawString("", "main", "json");
-
-                if (rawData == null) return false;
-
-                //Debug.Log(rawData);
-                lazyData = JsonConvert.DeserializeObject<ServerData>(rawData);
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-
-        }
-
-
-        public static async Task<string> GetRawFile(string src, string savePath, string fileName, string fileType)
-        {
-            return await fetcher.GetRawFile(src, savePath, fileName, fileType);
-        }
-
-        public static async Task<Texture2D> GetImage(string src, string imgName, string imgType)
-        {
-            return await fetcher.GetImage(src, imgName, imgType);
-        }
-
-        public static string GetServerPath() => fetcher.GetSrcPath();
-
-
-
-
-
-
-
-
-
-
-
 
     }
 }

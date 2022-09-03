@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -39,7 +40,7 @@ namespace LazyBuilder
             IconFactory.BackgroundColor = new Color(0, 0, 0, 0);
 
             var tempFileName = "thumbModel";
-            var tempFileAbsPath = $"{PathFactory.absoluteProjectPath}\\{PathFactory.relativeToolPath.AbsoluteFormat()}\\{PathFactory.TEMP_THUMB_PATH.AbsoluteFormat()}\\{tempFileName}.{fileType}";
+            var tempFileAbsPath = $"{PathFactory.absoluteToolPath}\\{PathFactory.TEMP_THUMB_PATH.AbsoluteFormat()}\\{tempFileName}.{fileType}";
             var tempFileRelPath = $"{PathFactory.relativeToolPath}/{PathFactory.TEMP_THUMB_PATH}/{tempFileName}.{fileType}";
 
             if (File.Exists(tempFileAbsPath))
@@ -59,6 +60,27 @@ namespace LazyBuilder
             await File.WriteAllBytesAsync(filePath, bytes);
 
             File.Delete(tempFileAbsPath);
+        }
+
+        public static string[] GetFiles(string path, bool createDir = false)
+        {
+            if (!Directory.Exists(path))
+            {
+                if (createDir)
+                    Directory.CreateDirectory(path);
+                else
+                    return new string[0];
+            }
+
+            DirectoryInfo tmpInfo = new DirectoryInfo(path);
+            FileInfo[] files = tmpInfo.GetFiles();
+
+            //Get all file (exluding meta files) names sorted by the modification date
+            return files
+                .Where(x => !x.Extension.Contains("meta"))
+                .OrderBy(f => f.LastWriteTime)
+                .Select(f => f.Name)
+                .ToArray();
         }
     }
 

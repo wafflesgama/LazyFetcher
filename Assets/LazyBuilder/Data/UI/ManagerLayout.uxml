@@ -10,12 +10,7 @@
                     </ui:VisualElement>
                     <ui:Button text="Load" display-tooltip-when-elided="true" name="Load" />
                 </ui:VisualElement>
-                <ui:VisualElement style="margin-top: 2px;">
-                    <ui:VisualElement style="flex-direction: row;">
-                        <ui:Label text="Pool" display-tooltip-when-elided="true" name="Label" style="-unity-text-align: middle-left; margin-right: 24px;" />
-                        <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="Pools" />
-                    </ui:VisualElement>
-                </ui:VisualElement>
+                <ui:VisualElement style="margin-top: 2px;" />
             </ui:VisualElement>
             <ui:VisualElement name="TableHeader" style="flex-grow: 1; flex-shrink: 0; flex-basis: auto; background-color: rgba(0, 0, 0, 0.43);">
                 <ui:VisualElement name="Label" style="height: 27px; background-color: rgba(149, 149, 149, 0.11); flex-direction: row; padding-left: 10px; padding-right: 10px;">
@@ -41,7 +36,7 @@
                 <ui:VisualElement name="Header" tabindex="2" style="width: 100%; background-color: rgb(54, 54, 54); flex-grow: 0; height: 139px; position: absolute; top: 0; border-bottom-width: 0; border-left-color: rgb(56, 56, 56); border-right-color: rgb(56, 56, 56); border-top-color: rgb(56, 56, 56); border-bottom-color: rgb(56, 56, 56); display: flex;">
                     <ui:VisualElement name="TitleContainer" style="width: auto; background-color: rgba(56, 56, 56, 0); flex-direction: row; justify-content: flex-end; margin-top: 12px; padding-right: 8px; align-items: center; padding-bottom: 9px;">
                         <ui:Label text=" Setttings" display-tooltip-when-elided="true" name="Id" style="margin-left: 0; margin-right: 10px; margin-top: 17px; margin-bottom: 11px; font-size: 22px; -unity-text-align: upper-right; -unity-font-style: bold; flex-direction: column; width: auto;" />
-                        <ui:VisualElement name="Thumbnail" style="background-color: rgb(154, 154, 154); height: 80px; width: 80px; display: flex; margin-bottom: 0;" />
+                        <ui:VisualElement name="Thumbnail" style="background-color: rgb(72, 72, 72); height: 80px; width: 80px; display: flex; margin-bottom: 0;" />
                     </ui:VisualElement>
                     <ui:VisualElement name="DescriptionContainer" style="margin-top: 10px; height: 40px; background-color: rgb(67, 106, 57); border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; align-items: center; justify-content: center; padding-bottom: 0; padding-left: 0; padding-right: 0; margin-right: 0; margin-bottom: 0; margin-left: 0;">
                         <ui:Label text="All Fields are correct" display-tooltip-when-elided="true" name="Description" style="color: rgba(255, 255, 255, 0.46); font-size: 10px;" />
