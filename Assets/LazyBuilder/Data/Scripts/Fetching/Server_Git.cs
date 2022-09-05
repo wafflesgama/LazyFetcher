@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 using UnityEditor;
@@ -26,6 +27,7 @@ namespace LazyBuilder
         {
             gitRepo = repo;
             gitBranch = branch;
+            storedImages = new Dictionary<string, Texture2D>();
         }
 
         public async Task<string> GetRawFile(string subUrl, string savePath, string fileName, string fileType)
@@ -37,16 +39,16 @@ namespace LazyBuilder
                 client.DownloadFileCompleted += (sender, e) =>
                 {
 
-                    Debug.Log($"Asset fetched- {fileName}.{fileType}");
+                    //Debug.Log($"Asset fetched- {fileName}.{fileType}");
                     AssetDatabase.Refresh();
                     processFinished.SetResult(!e.Cancelled && e.Error == null);
                 };
 
-                string savedFilePath = $"{Application.dataPath}/{savePath}/{fileName}.{fileType}";
+                string savedFilePath = $"{PathFactory.absoluteToolPath}/{savePath}/{fileName}.{fileType}";
                 string urlFullPath = $"{gitStandardPrefix}/{gitRepo}/{gitBlob}/{gitBranch}/{subUrl}/{fileName}.{fileType}?raw=true";
 
-                Debug.Log($"Fetching file from: {urlFullPath}");
-                Debug.Log($"Saving  file to: {savedFilePath}");
+                //Debug.Log($"Fetching file from: {urlFullPath}");
+                //Debug.Log($"Saving  file to: {savedFilePath}");
 
 
                 client.DownloadFileAsync(new System.Uri(urlFullPath), savedFilePath);
@@ -82,37 +84,60 @@ namespace LazyBuilder
         }
 
 
-        public async Task<Texture2D> GetImage(string subPath, string imgName, string imgType = PathFactory.THUMBNAIL_TYPE)
+        public async Task<Texture2D> GetImage(string subPath, string saveFilePath, string imgName)
         {
-
-            var url = $"{gitRawPrefix}/{gitRepo}/{gitBranch}/{subPath}/{imgName}.{imgType}";
+            var url = $"{gitRawPrefix}/{gitRepo}/{gitBranch}/{subPath}/{imgName}.{PathFactory.THUMBNAIL_TYPE}";
             //Debug.Log($"Fetching img from: {url}");
 
+            Texture2D image;
+
             if (storedImages.ContainsKey(url))
-                return storedImages[url];
-
-            UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url);
-
-            //bool finished = false;
-            //uwr.SendWebRequest().completed += (e) => finished = true;
-            uwr.SendWebRequest();
-
-            while (!uwr.isDone)
-                await Task.Delay(15);
-
-            if (uwr.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError(uwr.error);
-                return null;
+                image = storedImages[url];
+            }
+            else
+            {
+
+
+                UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url);
+
+                //bool finished = false;
+                //uwr.SendWebRequest().completed += (e) => finished = true;
+                uwr.SendWebRequest();
+
+                while (!uwr.isDone)
+                    await Task.Delay(15);
+
+                if (uwr.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogError(uwr.error);
+                    return null;
+                }
+
+                image = DownloadHandlerTexture.GetContent(uwr);
+
+                //Re check in case of concurrency + delay
+                if (!storedImages.ContainsKey(url))
+                    storedImages.Add(url, image);
             }
 
-            Texture2D iconAsset = DownloadHandlerTexture.GetContent(uwr);
+            if (saveFilePath != null)
+            {
+                var bytes = image.EncodeToPNG();
 
-            //Re check in case of concurrency + delay
-            if (!storedImages.ContainsKey(url))
-                storedImages.Add(url, iconAsset);
+                //AssetDatabase.StartAssetEditing();
+                //var tempFilePath=$"{Application.temporaryCachePath}/writeThumbnail.{PathFactory.THUMBNAIL_TYPE}";
 
-            return iconAsset;
+                //if(File.Exists(tempFilePath))
+                if (!File.Exists(saveFilePath))
+                    File.Create(saveFilePath).Close();
+
+                await File.WriteAllBytesAsync(saveFilePath, bytes);
+                
+                //AssetDatabase.StopAssetEditing();
+            }
+
+            return image;
         }
 
         public string GetFullPath()

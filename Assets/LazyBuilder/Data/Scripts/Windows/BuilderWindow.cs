@@ -19,6 +19,8 @@ namespace LazyBuilder
         private BuilderPreferences preferences;
         private Dictionary<string, Server> serverList;
 
+        private ServerData storedData;
+
         private string selectedItem;
         private string selectedFile;
 
@@ -57,9 +59,13 @@ namespace LazyBuilder
 
         private VisualElement _colorPallete;
 
-        private Button _zoomInBttn;
-        private Button _zoomOutBttn;
         private Button _searchBttn;
+
+
+        //Generation Props
+        private TextField _propName;
+        private Toggle _propCol;
+        private Toggle _propRb;
 
         private VisualElement _grid;
         private VisualElement _searchBttnIcon;
@@ -89,8 +95,9 @@ namespace LazyBuilder
         private List<string> tempFiles;
         private const int tempArraySize = 5;
 
-        //Stored Items
-        private List<string> storedFiles;
+
+        //Debug Messager
+        private TextElement _debugMssg;
 
 
         private Vector3 initPos;
@@ -102,10 +109,15 @@ namespace LazyBuilder
 
         private VisualTreeAsset _itemTemplate;
 
+        private Vector2 lastMousePos;
+        private bool isRotatingPrev;
+        private bool isTranslatingPrev;
+
         //Messages
         const string LOCALPOOL_MSG = "Local";
         const string MAINPOOL_MSG = "Main";
         const string NEWPOOL_MSG = "Edit servers...";
+        const string GROUNDMESHNOT_MSG = "Ground mesh couldn't be fetched";
 
 
         #region Unity Functions
@@ -116,7 +128,7 @@ namespace LazyBuilder
 
             SetupPreviewUtils();
 
-            SetupStoredFiles();
+            SetupStoredItems();
             SetupTempFiles();
 
             SetupBaseUI();
@@ -130,12 +142,15 @@ namespace LazyBuilder
 
             SetupServers();
 
-            //This infinite async loop ensures that the preview's camera is always rendered
-            RepaintCycle();
 
-            //Debug.Log("Searcbar focus");
+            //This infinite async loop ensures that the preview's camera is always rendered
+            //RepaintCycle();
+
+            await Task.Delay(1);
             this.Focus();
             _searchBar.Focus();
+
+            LogMessage("Setup finished");
         }
 
 
@@ -151,6 +166,12 @@ namespace LazyBuilder
 
         private void OnGUI()
         {
+
+            //if(isTranslatingPrev || isRotatingPrev)
+            //    EditorGUIUtility.AddCursorRect(new Rect(20, 20, 140, 40), MouseCursor.Orbit);
+
+
+
             RenderItemPreview();
         }
 
@@ -193,11 +214,9 @@ namespace LazyBuilder
 
             _serversBackBttn = (Button)_root.Q("Back_servers");
 
-            _generateBttn = (Button)_root.Q("GenerateBttn");
-            _generateBttnIcon = _root.Q("GenerateBttnIcon");
 
-            _zoomInBttn = (Button)_root.Q("ZoomIn");
-            _zoomOutBttn = (Button)_root.Q("ZoomOut");
+
+
 
             //Servers Dropdown
             _serversDropContainer = _root.Q("PoolsContainer");
@@ -217,10 +236,20 @@ namespace LazyBuilder
             _itemTypeDropdown = (DropdownField)_root.Q("ItemTypeDropdown");
 
 
+            //Generation Props
+            _propName = (TextField)_root.Q("Prop_Name");
+            _propCol = (Toggle)_root.Q("Prop_Col");
+            _propRb = (Toggle)_root.Q("Prop_Rb");
+
+            _generateBttn = (Button)_root.Q("GenerateBttn");
+            _generateBttnIcon = _root.Q("GenerateBttnIcon");
+
             _colorPallete = _root.Q("Pallete");
 
             _searchBttn = (Button)_root.Q("SearchBttn");
             _searchBttnIcon = _root.Q("SearchBttnIcon");
+
+            _debugMssg = (TextElement)_root.Q("Debug");
         }
 
         private void SetupIcons()
@@ -228,52 +257,62 @@ namespace LazyBuilder
             _searchBttnIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_Search Icon").image;
             _generateBttnIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("GameObject Icon").image;
             _itemTypeIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("icon dropdown").image;
-            _zoomInBttn.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_Search Icon").image;
-            _zoomOutBttn.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_Search Icon").image;
             _serverDropIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_icon dropdown@2x").image;
             _saveServersIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_SaveAs").image;
         }
 
         private void SetupCallbacks()
         {
-            //Event.KeyboardEvent.Add()
-            //Event.current.mousePosition
+            //Server Choose
+            _serversDropdown.RegisterValueChangedCallback(x => ServerChanged(x.newValue));
 
-            _serversBackBttn.clicked += () => SwitchPanel(true);
-
-
+            //Servers Edit
             _addServerBttn.clicked += AddServer;
             _removeServerBttn.clicked += RemoveServer;
             _saveServersBttn.clicked += SaveEditServers;
+            _serversBackBttn.clicked += () => SwitchPanel(true);
 
+
+            //Generation Props
+            _propCol.RegisterValueChangedCallback(x => preferences.Prop_Col = x.newValue);
+            _propRb.RegisterValueChangedCallback(x => preferences.Prop_Rb = x.newValue);
+
+            //Generation
             _generateBttn.clicked += Generate;
-            //_searchBar.RegisterValueChangedCallback(SearchChanged);
-            _itemTypeDropdown.RegisterValueChangedCallback(ItemTypeChanged);
-            _serversDropdown.RegisterValueChangedCallback(ServerChanged);
 
+            _itemTypeDropdown.RegisterValueChangedCallback(ItemTypeChanged);
+
+            //Search
             _searchBttn.clicked += Search;
             _searchBar.RegisterCallback<FocusInEvent>(OnSearchFocusIn);
             _searchBar.RegisterCallback<FocusOutEvent>(OnSearchFocusOut);
-            _zoomInBttn.clicked += ZoomIn;
-            _zoomOutBttn.clicked += ZoomOut;
+            //_searchBar.RegisterValueChangedCallback(SearchChanged);
+
+
+
         }
 
-        private void SetupItems()
+        private async void SetupItems(List<Item> items = null)
         {
             _grid.Clear();
 
-            var items = ServerManager.data.Items;
+            if (items == null)
+            {
+                if (onlyLocalSearch)
+                    items = storedData.Items;
+                else
+                    items = ServerManager.data.Items;
+            }
 
             for (int i = 0; i < items.Count; i++)
             {
-                if (onlyLocalSearch && !HasItemAnyType(items[i].Id)) continue; 
                 if (_itemTemplate == null)
                     _itemTemplate = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath(PathFactory.BuildUiFilePath(PathFactory.BUILDER_ITEM_LAYOUT_FILE), typeof(VisualTreeAsset));
 
                 var element = _itemTemplate.CloneTree();
                 SetupItem(element, items[i].Id, i, PathFactory.BuildItemPath(items[i].Id));
                 _grid.Add(element);
-                //await Task.Delay(1);
+                await Task.Delay(1);
             }
 
             SelectDefaultItem();
@@ -292,10 +331,10 @@ namespace LazyBuilder
 
             // var buttonIcon = button.Q(className: "quicktool-button-icon");
 
-            var texture = await ServerManager.server.GetImage(path, PathFactory.THUMBNAIL_FILE, PathFactory.THUMBNAIL_TYPE);
+            Texture2D img = await GetItemThumbnail(name, path);
 
             var imgHolder = button.Q("Img");
-            imgHolder.style.backgroundImage = texture;
+            imgHolder.style.backgroundImage = img;
 
             var iconOverlay = button.Q("Icon");
             iconOverlay.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_Valid").image;
@@ -304,9 +343,9 @@ namespace LazyBuilder
             button.tooltip = name;
 
             //Add Callback
-            button.clicked += () => ItemSelected(name, index, texture);
+            button.clicked += () => ItemSelected(name, index, img);
 
-            if (!HasItemAnyType(name))
+            if (!HasStoredItem(name))
             {
                 var overlay = button.Q("Overlay");
                 overlay.visible = false;
@@ -340,7 +379,7 @@ namespace LazyBuilder
 
             if (groundObj == null)
             {
-                Debug.LogError("Ground Mesh couldn't be fetched");
+                LogMessage(GROUNDMESHNOT_MSG, 2);
                 return;
             }
             groundMesh = groundObj.GetComponent<MeshFilter>().sharedMesh;
@@ -390,6 +429,8 @@ namespace LazyBuilder
 
             Rect rect = _mainImg.worldBound;
 
+            EditorGUIUtility.AddCursorRect(rect, MouseCursor.Pan);
+
             //previewRenderUtility.BeginStaticPreview(r);
             previewRenderUtility.BeginPreview(rect, GUIStyle.none);
             //Debug.Log($"OnGUI {tCube} / {tMat}");
@@ -411,7 +452,7 @@ namespace LazyBuilder
                 for (int i = 0; i < previewMats.Length; i++)
                 {
                     previewRenderUtility.DrawMesh(previewMesh, Vector3.zero, Quaternion.Euler(0, 0, 0), previewMats[i], i);
-                    previewRenderUtility.camera.transform.RotateAround(previewMesh.bounds.center, Vector3.up, Time.deltaTime);
+                    //previewRenderUtility.camera.transform.RotateAround(previewMesh.bounds.center, Vector3.up, Time.deltaTime);
 
                 }
 
@@ -439,19 +480,7 @@ namespace LazyBuilder
         private void Zoom(float factor)
         {
             previewRenderUtility.camera.transform.position += previewRenderUtility.camera.transform.forward * 1f * factor;
-        }
-        private void ZoomIn()
-        {
-            //previewRenderUtility.camera.transform.position += new Vector3(1, 1, 1);
-            //previewRenderUtility.camera.transform.position += new Vector3(0, -.5835f, 1);
-            previewRenderUtility.camera.transform.position += previewRenderUtility.camera.transform.forward * .7f;
-        }
-
-        private void ZoomOut()
-        {
-            //previewRenderUtility.camera.transform.position += new Vector3(-1, -1, -1);
-            //previewRenderUtility.camera.transform.position += new Vector3(0, -.5835f, 1) * -1;
-            previewRenderUtility.camera.transform.position += previewRenderUtility.camera.transform.forward * -.7f;
+            Repaint();
         }
 
         #endregion Item Render & Preview 
@@ -462,7 +491,38 @@ namespace LazyBuilder
         {
             _root.RegisterCallback<KeyDownEvent>(OnKeyboardKeyDown, TrickleDown.TrickleDown);
             _root.RegisterCallback<MouseDownEvent>(OnMouseKeyDown, TrickleDown.TrickleDown);
+            _root.RegisterCallback<MouseUpEvent>(OnMouseKeyUp, TrickleDown.TrickleDown);
+            _root.RegisterCallback<MouseMoveEvent>(OnMouseMove, TrickleDown.TrickleDown);
             _root.RegisterCallback<WheelEvent>(OnMouseWheelDown, TrickleDown.TrickleDown);
+        }
+
+        private void OnMouseMove(MouseMoveEvent evt)
+        {
+
+
+            if (isRotatingPrev || isTranslatingPrev)
+            {
+                var posDif = evt.mousePosition - lastMousePos;
+                if (lastMousePos.x != 0)
+                {
+                    if (isRotatingPrev)
+                    {
+                        previewRenderUtility.camera.transform.RotateAround(previewMesh.bounds.center, previewRenderUtility.camera.transform.right, posDif.y * 8 * Time.deltaTime);
+                        previewRenderUtility.camera.transform.RotateAround(previewMesh.bounds.center, Vector3.up, posDif.x * 8 * Time.deltaTime);
+                        Repaint();
+                    }
+
+                    if (isTranslatingPrev)
+                    {
+                        previewRenderUtility.camera.transform.position -= previewRenderUtility.camera.transform.right * posDif.x * 0.07f * Time.deltaTime;
+                        previewRenderUtility.camera.transform.position += previewRenderUtility.camera.transform.up * posDif.y * 0.07f * Time.deltaTime;
+                        Repaint();
+                    }
+                }
+                lastMousePos = evt.mousePosition;
+            }
+
+
         }
 
         private void OnKeyboardKeyDown(KeyDownEvent e)
@@ -476,7 +536,7 @@ namespace LazyBuilder
                 _searchBar.Focus();
             }
 
-            else if ((e.keyCode == KeyCode.Return || e.character == '\n') && selectedFile != "")
+            else if ((e.keyCode == KeyCode.Return) && selectedFile != "")
             {
                 Generate();
             }
@@ -484,30 +544,46 @@ namespace LazyBuilder
 
         private void OnMouseKeyDown(MouseDownEvent e)
         {
-            //Debug.Log($"On mouse down {e.button}");
+
+            if ((e.button == 0 || e.button == 2) && CheckIfMouseOverSreen(_mainImg.worldBound, true, new Vector2(0, 20)))
+            {
+                if (e.button == 0)
+                    isRotatingPrev = true;
+
+                if (e.button == 2)
+                    isTranslatingPrev = true;
+
+                lastMousePos = Vector2.zero;
+            }
+
+        }
+
+        private void OnMouseKeyUp(MouseUpEvent e)
+        {
+
+            if (e.button == 0 && isRotatingPrev)
+                isRotatingPrev = false;
+
+            if (e.button == 2 && isTranslatingPrev)
+                isTranslatingPrev = false;
+
         }
 
         private void OnMouseWheelDown(WheelEvent e)
         {
             if (e.delta == Vector3.zero) return;
 
-            //Debug.Log($"On mouse wheel scroll {e.delta}");
 
             if (CheckIfMouseOverSreen(_mainImg.worldBound, true, new Vector2(0, 20)))
             {
                 Zoom(e.delta.y);
             }
 
-
-
         }
 
         private static bool CheckIfMouseOverSreen(Rect r, bool relativePos = true, Vector2? offset = null)
         {
             Vector2 mousePos = relativePos ? Event.current.mousePosition : GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
-
-            Debug.Log($"Mouse position: {mousePos.x},{mousePos.y}");
-            Debug.Log($"ScreenMin: {r.xMin},{r.yMin} ScreenMax: {r.xMax},{r.yMax}");
 
             var xMin = r.xMin + (offset.HasValue ? offset.Value.x : 0);
             var xMax = r.xMax + (offset.HasValue ? offset.Value.x : 0);
@@ -517,7 +593,6 @@ namespace LazyBuilder
             var condition = mousePos.x >= xMin && mousePos.x <= xMax &&
                              mousePos.y >= yMin && mousePos.y <= yMax;
 
-            Debug.Log($"Is over screen? - {condition}");
             return condition;
         }
         #endregion IO
@@ -528,7 +603,7 @@ namespace LazyBuilder
             var filename = $"{itemId}_{itemTypeId}";
             selectedFile = $"{filename}.{PathFactory.MESH_TYPE}";
 
-            bool storedResult = HasStoredFile(selectedFile);
+            bool storedResult = HasStoredItem(itemId, itemTypeId);
             bool tempResult = HasTempFile(selectedFile);
 
             string path;
@@ -542,51 +617,86 @@ namespace LazyBuilder
             {
                 if (!tempResult)
                 {
-                    Debug.Log("Fetching item name" + filename);
+
+                    LogMessage("Fetching item name" + filename);
 
                     //Fetch File from server and add to Temp list
                     await ServerManager.server.GetRawFile(PathFactory.BuildItemPath(selectedItem), PathFactory.TEMP_ITEMS_PATH, filename, PathFactory.MESH_TYPE);
+                    AssetDatabase.Refresh();
                     AddTempFile(selectedFile);
                 }
                 path = $"{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}/{selectedFile}";
             }
 
-            AssetDatabase.Refresh();
             return path;
         }
 
-
-        #region Stored Files Buffer
-
-        private bool HasItemAnyType(string itemId)
+        private async Task<Texture2D> GetItemThumbnail(string itemId, string path)
         {
-            return storedFiles.Where(x => x.StartsWith(itemId)).Any();
+            //If online search - fetch from server
+            if (!onlyLocalSearch)
+                return await ServerManager.server.GetImage(path, null, PathFactory.THUMBNAIL_FILE);
+
+            //Else - fetch from local thumbnails folder
+
+
+            var localPath = $"{PathFactory.absoluteToolPath}\\{PathFactory.STORED_THUMB_PATH}\\{itemId}.{PathFactory.THUMBNAIL_TYPE}";
+            localPath = localPath.AbsoluteFormat();
+
+            if (!File.Exists(localPath)) return null;
+
+            byte[] imageBytes = await File.ReadAllBytesAsync(localPath);
+
+            Texture2D image = new Texture2D(2, 2);
+            image.LoadImage(imageBytes);
+
+            return image;
         }
-        private void StoreTempFile(string id)
+
+
+        #region Stored Items
+
+        private bool HasStoredItem(string itemId, string itemTypeId = null)
         {
-            var dir = $"{Application.dataPath}/{PathFactory.STORED_ITEMS_PATH}";
-            if (!Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
+            if (itemTypeId == null)
+                return storedData.Items.Where(x => x.Id == itemId).Any();
 
-            AssetDatabase.MoveAsset($"{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}/{id}", $"{PathFactory.relativeToolPath}/{PathFactory.STORED_ITEMS_PATH}/{id}");
-
-            RemoveTempFile(id);
+            return storedData.Items.Where(x => x.Id == itemId && x.TypeIds.Contains(itemTypeId)).Any();
         }
 
-
-        private bool HasStoredFile(string id)
+        private Item GetStoredItem(string itemId)
         {
-            return storedFiles.Contains(id);
+            return storedData.Items.Where(x => x.Id == itemId).FirstOrDefault();
         }
-        private void SetupStoredFiles()
+        private void SetupStoredItems()
         {
+
+            storedData = new ServerData();
+            storedData.Items = new List<Item>();
+
             string tmpPath = $"{PathFactory.absoluteToolPath}\\{PathFactory.STORED_ITEMS_PATH}";
 
-            storedFiles = new List<string>(Utils.GetFiles(tmpPath, true));
+            var files = Utils.GetFiles(tmpPath, true);
+            foreach (var file in files)
+            {
+                //Format: Id_TypeId.fbx
+                var fileSplit = file.Split('_');
+
+                if (!HasStoredItem(fileSplit[0]))
+                    storedData.Items.Add(new Item() { Id = fileSplit[0] });
+
+                var item = GetStoredItem(fileSplit[0]);
+
+                if (item.TypeIds == null)
+                    item.TypeIds = new List<string>();
+
+                //Add TypeId
+                item.TypeIds.Add(fileSplit[1].Substring(0, fileSplit[1].IndexOf('.')));
+            }
 
         }
 
-        #endregion Stored Files Buffer
+        #endregion Stored Items
 
         #region Temporary Files Buffer
 
@@ -627,6 +737,7 @@ namespace LazyBuilder
         private void RemoveTempFile(string id)
         {
             var filePath = $"{PathFactory.absoluteToolPath}\\{PathFactory.TEMP_ITEMS_PATH}\\{id}";
+            filePath = filePath.AbsoluteFormat();
 
             if (File.Exists(filePath))
             {
@@ -637,7 +748,16 @@ namespace LazyBuilder
             tempFiles.Remove(id);
         }
 
+        private void StoreTempFile(string id)
+        {
+            var dir = $"{Application.dataPath}/{PathFactory.STORED_ITEMS_PATH}";
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
 
+            AssetDatabase.MoveAsset($"{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}/{id}", $"{PathFactory.relativeToolPath}/{PathFactory.STORED_ITEMS_PATH}/{id}");
+
+            RemoveTempFile(id);
+        }
 
         #endregion Temporary Items Buffer
 
@@ -645,30 +765,37 @@ namespace LazyBuilder
 
         private void Search()
         {
-            var initList = ServerManager.data.Items;
+            List<Item> items;
+            if (onlyLocalSearch)
+                items = storedData.Items;
+            else
+                items = ServerManager.data.Items;
             var searchVal = _searchBar.value;
 
             if (String.IsNullOrWhiteSpace(searchVal))
                 SetupItems();
             else
             {
-                var searchedList = FuzzySearch(initList, searchVal);
-                SetupItems();
+                var searchedList = FuzzySearch(items, searchVal);
+                SetupItems(searchedList);
             }
         }
 
         private List<Item> FuzzySearch(List<Item> source, string key)
         {
-            return source.Where(x => FuzzyItemMatch(x, key) > 1).OrderByDescending(x => FuzzyItemMatch(x, key)).ToList();
+            return source.Where(x => FuzzyAllMatch(x, key) > 1).OrderByDescending(x => FuzzyIdMatch(x, key)).ThenByDescending(x => FuzzyTagMatch(x, key)).ToList();
         }
 
-        private bool FuzzyItem(Item item, string key)
-        {
-            return FuzzyItemMatch(item, key) == 0;
-        }
-        private int FuzzyItemMatch(Item source, string key)
+        private int FuzzyAllMatch(Item source, string key)
         {
             int maxMatches = FuzzyStringMatch(source.Id, key);
+            return Mathf.Max(maxMatches, FuzzyTagMatch(source, key));
+        }
+
+        private int FuzzyIdMatch(Item source, string key) => FuzzyStringMatch(source.Id, key);
+        private int FuzzyTagMatch(Item source, string key)
+        {
+            int maxMatches = 0;
             foreach (var tag in source.Tags)
                 maxMatches = Mathf.Max(maxMatches, FuzzyStringMatch(tag, key));
             return maxMatches;
@@ -729,16 +856,36 @@ namespace LazyBuilder
 
         #region Object Generation
 
-        private void Generate()
+        private async void Generate()
         {
             StoreTempFile(selectedFile);
             var gObj = AssetDatabase.LoadAssetAtPath($"{PathFactory.relativeToolPath}/{PathFactory.STORED_ITEMS_PATH}/{selectedFile}", typeof(UnityEngine.Object)) as GameObject;
 
             if (gObj == null) return;
             var newObj = GameObject.Instantiate(gObj);
+
+
+            newObj.name = _propName.value;
+
+            if (_propCol.value)
+            {
+                var meshCollider = newObj.AddComponent<MeshCollider>();
+                meshCollider.convex = _propRb.value;
+
+            }
+            if (_propRb.value)
+                newObj.AddComponent<Rigidbody>();
+
+
             PlaceObjectInView(newObj);
-            //PlaceObjectInView(test);
+
+            //Save Thumbnail of Image if not already saved
+            var localPath = $"{PathFactory.absoluteToolPath}\\{PathFactory.STORED_THUMB_PATH}\\{selectedItem}.{PathFactory.THUMBNAIL_TYPE}";
+            if (!File.Exists(localPath))
+                await ServerManager.server.GetImage(PathFactory.BuildItemPath(selectedItem), localPath, PathFactory.THUMBNAIL_FILE);
+
             Close();
+
         }
 
         private void PlaceObjectInView(GameObject gObject)
@@ -808,7 +955,6 @@ namespace LazyBuilder
         private void ColorChanged(ChangeEvent<Color> value)
         {
             var index = previewColors.IndexOf(value.previousValue);
-            //Debug.Log($"Chaning mat  at index {index} mats have arr size of {previewMats.Length}");
 
             if (index == -1) return;
             previewColors[index] = value.newValue;
@@ -829,11 +975,19 @@ namespace LazyBuilder
             _mainImg.style.backgroundImage = icon;
             _mainTitle.text = itemId.Capitalize();
 
-            var choices = ServerManager.data.Items[index].TypeIds;
+            _propRb.value = preferences.Prop_Rb;
+            _propCol.value = preferences.Prop_Col;
+
+            List<string> choices;
+
+            if (onlyLocalSearch)
+                choices = storedData.Items.Where(x => x.Id == itemId).FirstOrDefault().TypeIds;
+            else
+                choices = ServerManager.data.Items[index].TypeIds;
 
             for (int i = 0; i < choices.Count; i++)
             {
-                if (HasStoredFile($"{itemId}_{choices[i]}.{PathFactory.MESH_TYPE}"))
+                if (HasStoredItem(itemId, choices[i]))
                     choices[i] = $"{choices[i]}\t✓";
             }
 
@@ -868,13 +1022,14 @@ namespace LazyBuilder
             previewMats = null;
 
             _itemTypeSelected.text = value;
+            _propName.value = $"{value.Capitalize()} {selectedItem.Capitalize()}";
 
             string objPath = await GetItem(selectedItem, value);
             previewObj = AssetDatabase.LoadAssetAtPath(objPath, typeof(UnityEngine.Object)) as GameObject;
 
             if (previewObj == null)
             {
-                Debug.LogError("Item couldn't be loaded");
+                Debug.LogError($"Item {value} couldn't be loaded");
                 return;
             }
 
@@ -901,7 +1056,7 @@ namespace LazyBuilder
             }
 
             previewMesh = previewObj.gameObject.GetComponent<MeshFilter>().sharedMesh;
-            previewGroundPos = new Vector3(previewMesh.bounds.center.x, previewMesh.bounds.min.y, previewMesh.bounds.center.z);
+            previewGroundPos = new Vector3(previewMesh.bounds.center.x, previewMesh.bounds.min.y - 0.01f, previewMesh.bounds.center.z);
 
             var bounds = previewMesh.bounds;
             var objectSizes = bounds.max - bounds.min;
@@ -932,7 +1087,11 @@ namespace LazyBuilder
         {
             if (preferences.LastItem != null && preferences.LastItemType != null)
             {
-                var index = ServerManager.data.Items.TakeWhile(x => x.Id != preferences.LastItem).Count();
+                int index;
+                if (onlyLocalSearch)
+                    index = storedData.Items.TakeWhile(x => x.Id != preferences.LastItem).Count();
+                else
+                    index = ServerManager.data.Items.TakeWhile(x => x.Id != preferences.LastItem).Count();
 
                 //Manual selection set to 'true' to avoid auto selecting a typeId 
                 ItemSelected(preferences.LastItem, index, null, true);
@@ -981,7 +1140,11 @@ namespace LazyBuilder
 
             serverList.Add(NEWPOOL_MSG, null);
             _serversDropdown.choices = serverList.Keys.ToList();
+
             _serversDropdown.value = preferences.LastServer;
+
+            //Have to manually Trigger Server Change (bug)
+            ServerChanged(preferences.LastServer);
         }
 
 
@@ -1052,9 +1215,8 @@ namespace LazyBuilder
         }
 
 
-        private async void ServerChanged(ChangeEvent<string> value)
+        private async void ServerChanged(string newServer)
         {
-            var newServer = value.newValue;
 
             if (newServer == NEWPOOL_MSG)
             {
@@ -1062,8 +1224,8 @@ namespace LazyBuilder
                 return;
             }
 
-           Server currentServer= serverList[newServer];  
-           ServerManager.SetServer(currentServer);
+            Server currentServer = serverList[newServer];
+            ServerManager.SetServer(currentServer);
 
             await ServerManager.FetchServerData();
 
@@ -1071,7 +1233,7 @@ namespace LazyBuilder
             SwitchPanel(true);
             _serverDropSelected.text = newServer;
 
-            
+
             onlyLocalSearch = newServer == LOCALPOOL_MSG;
             SetupItems();
 
@@ -1099,5 +1261,34 @@ namespace LazyBuilder
         }
 
         #endregion Preferences
+
+        private async void LogMessage(string message, int messageLevel = 0)
+        {
+            _debugMssg.style.opacity = 1;
+            _debugMssg.text = message;
+            Color color = messageLevel switch
+            {
+                1 => Color.yellow,
+                2 => Color.red,
+                _ => Color.white
+            };
+            _debugMssg.style.color = color;
+
+
+            for (int i = 0; i < 1000; i++)
+            {
+                await Task.Delay(5);
+                if (_debugMssg.text != message) return;
+
+                var subval = i * 0.01f;
+                if (subval > 1) break;
+
+                _debugMssg.style.opacity = 1 - subval;
+
+            }
+
+            _debugMssg.text = "";
+
+        }
     }
 }

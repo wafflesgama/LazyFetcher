@@ -26,7 +26,10 @@ namespace LazyBuilder
 
         public const string TEMP_ITEMS_PATH = "Data/Temp/Items";
         public const string TEMP_THUMB_PATH = "Data/Temp/Thumbnails";
-        public const string STORED_ITEMS_PATH = "Items";
+
+        public const string STORED_ITEMS_PATH = "Data/Items";
+        public const string STORED_THUMB_PATH = "Data/Thumbnails";
+
         public const string UI_PATH = "Data/UI";
         public const string MESHES_PATH = "Data/Meshes";
         public const string MATERIALS_PATH = "Data/Materials";

@@ -1,7 +1,7 @@
 {
-  "LastServer": null,
+  "LastServer": "Main",
   "LastItem": "house",
-  "LastItemType": "type10",
+  "LastItemType": "type01",
   "ServersType": [
     0
   ],
@@ -13,5 +13,7 @@
   ],
   "ServersBranch": [
     "main"
-  ]
+  ],
+  "PropCol": false,
+  "PropRb": false
 }

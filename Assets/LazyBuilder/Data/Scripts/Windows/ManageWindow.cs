@@ -196,7 +196,8 @@ namespace LazyBuilder
 
             selectedItem = item;
 
-            _thumbnail.style.backgroundImage = await ServerManager.server.GetImage(PathFactory.BuildItemPath(item.Id), PathFactory.THUMBNAIL_FILE);
+            //Null savePath to not store image
+            _thumbnail.style.backgroundImage = await ServerManager.server.GetImage(PathFactory.BuildItemPath(item.Id),null ,PathFactory.THUMBNAIL_FILE);
 
             _description.text = itemState.Item2;
 

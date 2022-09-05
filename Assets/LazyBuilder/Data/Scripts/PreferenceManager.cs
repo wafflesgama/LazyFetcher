@@ -30,6 +30,12 @@ namespace LazyBuilder
         [JsonProperty("ServersBranch")]
         public List<string> Servers_branch { get; set; }
 
+        [JsonProperty("PropCol")]
+        public bool Prop_Col { get; set; }
+
+        [JsonProperty("PropRb")]
+        public bool Prop_Rb { get; set; }
+
     }
 
     public class ManagerPreferences

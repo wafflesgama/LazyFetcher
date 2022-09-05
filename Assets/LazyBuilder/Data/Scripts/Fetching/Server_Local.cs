@@ -44,20 +44,26 @@ namespace LazyBuilder
 
             return File.ReadAllTextAsync($"{serverPath}\\{src}\\{fileName}.{fileType}");
         }
-        public async Task<Texture2D> GetImage(string src, string imgName, string imgType = PathFactory.THUMBNAIL_TYPE)
+        public async Task<Texture2D> GetImage(string src, string saveFilePath, string imgName)
         {
             src = src.AbsoluteFormat();
 
-            var path = $"{serverPath}\\{src}\\{imgName}.{imgType}";
+            var path = $"{serverPath}\\{src}\\{imgName}.{PathFactory.THUMBNAIL_TYPE}";
 
             if (!File.Exists(path)) return null;
 
-            byte[] pngBytes = await File.ReadAllBytesAsync(path);
+            byte[] imageBytes = await File.ReadAllBytesAsync(path);
 
-            Texture2D tex = new Texture2D(2, 2);
-            tex.LoadImage(pngBytes);
+            Texture2D image = new Texture2D(2, 2);
+            image.LoadImage(imageBytes);
 
-            return tex;
+            if (!File.Exists(saveFilePath))
+                File.Create(saveFilePath).Close();
+
+            if (saveFilePath != null)
+                File.WriteAllBytes(saveFilePath, imageBytes);
+
+            return image;
         }
 
         public string GetFullPath()
