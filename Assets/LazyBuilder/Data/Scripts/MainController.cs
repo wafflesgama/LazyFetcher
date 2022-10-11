@@ -33,6 +33,7 @@ namespace LazyBuilder
             window.titleContent = new GUIContent("Lazy Builder");
             window.Show();
 
+
         }
 
 

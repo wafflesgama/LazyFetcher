@@ -47,6 +47,9 @@ namespace LazyBuilder
         public const string MATERIAL_TYPE = "mat";
 
         public const string GROUND_FILE = "ground";
+        
+        public const string MARKDOWN_FILE = "AssetList";
+
 
         public static void Init(ScriptableObject scriptSource)
         {

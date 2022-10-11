@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -23,6 +24,24 @@ namespace LazyBuilder
             return new string(letters);
         }
 
+        public static string SeparateCase(this string source)
+        {
+            string[] splittedWords = Regex.Split(source, @"(?<=[a-z])(?=[A-Z])");
+
+            //string[] splittedWords = Regex.Split(source, @"(?<!^)(?=[A-Z])");
+            string final = "";
+
+            foreach (var splittedWord in splittedWords)
+            {
+                if (splittedWord.Length == 0) continue;
+                final += splittedWord + " ";
+            }
+            //Remove last space
+            final.Remove(final.Length - 1, 1);
+
+            return final;
+        }
+
         public static string AbsoluteFormat(this string source)
         {
             return source.Replace('/', '\\');
@@ -33,11 +52,16 @@ namespace LazyBuilder
             return source.Replace('\\', '/');
         }
 
-        public static async Task CreateThumbnailFromModelAsync(string absItemPath, string fileName, string fileType = "fbx")
+        public static char Upper(this char source)
+        {
+            return char.ToUpper(source);
+        }
+
+        public static async Task CreateThumbnailFromModelAsync(string absItemPath, string fileName, Vector3 posOffset, Vector3 rotOffset, string fileType = "fbx")
         {
             IconFactory.MarkTextureNonReadable = false;
             IconFactory.OrthographicMode = true;
-            IconFactory.BackgroundColor = new Color(0, 0, 0, 0);
+            IconFactory.BackgroundColor = new Color(0.294f, 0.294f, 0.294f);
 
             var tempFileName = "thumbModel";
             var tempFileAbsPath = $"{PathFactory.absoluteToolPath}\\{PathFactory.TEMP_THUMB_PATH.AbsoluteFormat()}\\{tempFileName}.{fileType}";
@@ -48,7 +72,7 @@ namespace LazyBuilder
 
             File.Copy($"{absItemPath}\\{fileName}.{fileType}", tempFileAbsPath);
 
-            var tex = await IconFactory.GenerateModelPreviewFromPath(tempFileRelPath, 1024, 1024);
+            var tex = await IconFactory.GenerateModelPreviewFromPath(tempFileRelPath, posOffset, rotOffset, 256, 256);
             var bytes = tex.EncodeToPNG();
 
             var filePath = $"{absItemPath}\\thumbnail.png";

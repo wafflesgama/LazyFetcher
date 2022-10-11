@@ -1,19 +1,24 @@
 {
-  "LastServer": "Main",
-  "LastItem": "house",
-  "LastItemType": "type01",
+  "LastServer": "MainLocal",
+  "LastItem": "PaperBallCrumble",
+  "LastItemType": "Type7",
   "ServersType": [
-    0
+    0,
+    1
   ],
   "ServersId": [
-    "Main"
+    "Main",
+    "MainLocal"
   ],
   "ServersSrc": [
-    "wafflesgama/LazyBuilderData"
+    "wafflesgama/LazyBuilderLibrary",
+    "C:\\Projects\\LazyBuilder\\LazyBuilderData"
   ],
   "ServersBranch": [
-    "main"
+    "main",
+    null
   ],
   "PropCol": false,
-  "PropRb": false
+  "PropRb": false,
+  "PageSize": 50
 }

@@ -36,6 +36,9 @@ namespace LazyBuilder
         [JsonProperty("PropRb")]
         public bool Prop_Rb { get; set; }
 
+        [JsonProperty("PageSize")]
+        public int PageSize { get; set; }
+
     }
 
     public class ManagerPreferences

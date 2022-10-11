@@ -17,7 +17,7 @@ namespace LazyBuilder
         public const string gitBlob = "blob";
         public const string gitRawPrefix = "https://raw.githubusercontent.com";
         public const string gitStandardPrefix = "https://github.com";
-        public const string defaultRepo = "wafflesgama/LazyBuilderData";
+        public const string defaultRepo = "wafflesgama/LazyBuilderLibrary";
         public const string defaultBranch = "main";
 
         private string gitRepo;

@@ -57,11 +57,14 @@ namespace LazyBuilder
             Texture2D image = new Texture2D(2, 2);
             image.LoadImage(imageBytes);
 
-            if (!File.Exists(saveFilePath))
-                File.Create(saveFilePath).Close();
 
             if (saveFilePath != null)
+            {
+                if (!File.Exists(saveFilePath))
+                    File.Create(saveFilePath).Close();
+
                 File.WriteAllBytes(saveFilePath, imageBytes);
+            }
 
             return image;
         }

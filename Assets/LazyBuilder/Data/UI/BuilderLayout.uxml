@@ -35,9 +35,18 @@
                         <ui:Button text="◆" display-tooltip-when-elided="true" name="hid" style="border-top-right-radius: 0; border-bottom-right-radius: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-top: 2px; padding-bottom: 2px; margin-right: 0; margin-bottom: 5px; display: none;" />
                         <ui:Button text="+" display-tooltip-when-elided="true" name="Add" style="border-top-right-radius: 0; border-bottom-right-radius: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-top: 0; padding-bottom: 1px; margin-right: 0; margin-bottom: 5px; border-bottom-left-radius: 3px; border-top-left-radius: 3px; font-size: 15px; padding-right: 3px; padding-left: 3px; margin-left: 7px; -unity-text-align: middle-center;" />
                     </ui:VisualElement>
-                    <ui:ScrollView name="ScrollViewer" mode="Vertical" show-horizontal-scroller="true" horizontal-scroller-visibility="Hidden" style="height: 100%; background-color: rgba(0, 0, 0, 0.24); flex-grow: 1; width: auto; flex-direction: column; flex-wrap: wrap; flex-shrink: 0; align-items: flex-start;">
-                        <ui:GroupBox name="ItemsColumn1" style="flex-direction: row; width: 100%; max-width: none; flex-wrap: wrap; overflow: visible; flex-shrink: 0; align-items: flex-start;" />
-                    </ui:ScrollView>
+                    <ui:VisualElement style="flex-grow: 1; flex-shrink: 0;">
+                        <ui:ScrollView name="ScrollViewer" mode="Vertical" show-horizontal-scroller="true" horizontal-scroller-visibility="Hidden" style="background-color: rgba(0, 0, 0, 0.24); flex-grow: 1; width: auto; flex-direction: column; flex-wrap: wrap; flex-shrink: 0; align-items: flex-start; height: 90%;">
+                            <ui:GroupBox name="ItemsColumn1" style="flex-direction: row; width: 100%; max-width: none; flex-wrap: wrap; overflow: visible; flex-shrink: 0; align-items: flex-start;" />
+                        </ui:ScrollView>
+                        <ui:VisualElement style="height: 19px; flex-direction: row; flex-grow: 0; flex-shrink: 0; margin-bottom: 0;">
+                            <ui:Button text="&lt;" display-tooltip-when-elided="true" name="PrevPageBttn" style="font-size: 9px; margin-right: 0;" />
+                            <ui:Button text="&gt;" display-tooltip-when-elided="true" name="NextPageBttn" style="-unity-font-style: normal; font-size: 9px; margin-left: 0;" />
+                            <ui:Label text="1-20 of 69 Results" display-tooltip-when-elided="true" name="PageIndexMssg" style="font-size: 8px; -unity-text-align: middle-left;" />
+                            <ui:VisualElement name="Spacer" style="flex-grow: 1;" />
+                            <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="PageSizeDropdown" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="SideContainer" style="flex-direction: row; background-color: rgba(38, 35, 35, 0); flex-grow: 0; min-width: 250px; flex-basis: 1px;">

@@ -157,30 +157,30 @@ namespace LazyBuilder
             set { m_markTextureNonReadable = value; }
         }
 
-        public static Texture2D GenerateMaterialPreview(Material material, PrimitiveType previewPrimitive, int width = 64, int height = 64)
+        public static Texture2D GenerateMaterialPreview(Material material, PrimitiveType previewPrimitive, Vector3 posOffset, Vector3 rotOffset, int width = 64, int height = 64)
         {
-            return GenerateMaterialPreviewInternal(material, previewPrimitive, null, null, width, height);
+            return GenerateMaterialPreviewInternal(material, previewPrimitive, null, null, width, height,  posOffset,  rotOffset);
         }
 
-        public static Texture2D GenerateMaterialPreviewWithShader(Material material, PrimitiveType previewPrimitive, Shader shader, string replacementTag, int width = 64, int height = 64)
+        public static Texture2D GenerateMaterialPreviewWithShader(Material material, PrimitiveType previewPrimitive, Shader shader, string replacementTag, Vector3 posOffset, Vector3 rotOffset, int width = 64, int height = 64)
         {
-            return GenerateMaterialPreviewInternal(material, previewPrimitive, shader, replacementTag, width, height);
+            return GenerateMaterialPreviewInternal(material, previewPrimitive, shader, replacementTag, width, height,  posOffset,  rotOffset);
         }
 
 #if UNITY_2018_2_OR_NEWER
-        public static void GenerateMaterialPreviewAsync(Action<Texture2D> callback, Material material, PrimitiveType previewPrimitive, int width = 64, int height = 64)
+        public static void GenerateMaterialPreviewAsync(Action<Texture2D> callback, Material material, PrimitiveType previewPrimitive, Vector3 posOffset, Vector3 rotOffset, int width = 64, int height = 64)
         {
-            GenerateMaterialPreviewInternal(material, previewPrimitive, null, null, width, height, callback);
+            GenerateMaterialPreviewInternal(material, previewPrimitive, null, null, width, height,  posOffset,  rotOffset, callback);
         }
 
-        public static void GenerateMaterialPreviewWithShaderAsync(Action<Texture2D> callback, Material material, PrimitiveType previewPrimitive, Shader shader, string replacementTag, int width = 64, int height = 64)
+        public static void GenerateMaterialPreviewWithShaderAsync(Action<Texture2D> callback, Material material, PrimitiveType previewPrimitive, Shader shader, string replacementTag, Vector3 posOffset, Vector3 rotOffset, int width = 64, int height = 64)
         {
-            GenerateMaterialPreviewInternal(material, previewPrimitive, shader, replacementTag, width, height, callback);
+            GenerateMaterialPreviewInternal(material, previewPrimitive, shader, replacementTag, width, height,  posOffset,  rotOffset, callback);
         }
 #endif
 
 #if UNITY_2018_2_OR_NEWER
-        private static Texture2D GenerateMaterialPreviewInternal(Material material, PrimitiveType previewPrimitive, Shader shader, string replacementTag, int width, int height, Action<Texture2D> asyncCallback = null)
+        private static Texture2D GenerateMaterialPreviewInternal(Material material, PrimitiveType previewPrimitive, Shader shader, string replacementTag, int width, int height, Vector3 posOffset, Vector3 rotOffset, Action<Texture2D> asyncCallback = null)
 #else
 	private static Texture2D GenerateMaterialPreviewInternal( Material material, PrimitiveType previewPrimitive, Shader shader, string replacementTag, int width, int height )
 #endif
@@ -192,7 +192,7 @@ namespace LazyBuilder
             try
             {
 #if UNITY_2018_2_OR_NEWER
-                return GenerateModelPreviewInternal(previewModel.transform, shader, replacementTag, width, height, false, true, asyncCallback);
+                return GenerateModelPreviewInternal(previewModel.transform, shader, replacementTag, width, height, false, true,  posOffset,  rotOffset, asyncCallback);
 #else
 			return GenerateModelPreviewInternal( previewModel.transform, shader, replacementTag, width, height, false, true );
 #endif
@@ -209,7 +209,7 @@ namespace LazyBuilder
             return null;
         }
 
-        public static async Task<Texture2D> GenerateModelPreviewFromPath(string filePath, int width = 64, int height = 64, bool shouldCloneModel = false, bool shouldIgnoreParticleSystems = true)
+        public static async Task<Texture2D> GenerateModelPreviewFromPath(string filePath, Vector3 posOffset, Vector3 rotOffset, int width = 64, int height = 64, bool shouldCloneModel = false, bool shouldIgnoreParticleSystems = true)
         {
             AssetDatabase.Refresh();
             var obj = AssetDatabase.LoadAssetAtPath(filePath, typeof(GameObject)) as GameObject;
@@ -219,6 +219,8 @@ namespace LazyBuilder
             var instObj = GameObject.Instantiate(obj);
 
             var renderer = instObj.GetComponent<MeshRenderer>();
+
+           
 
             foreach (var material in renderer.sharedMaterials)
             {
@@ -230,7 +232,7 @@ namespace LazyBuilder
             GenerateModelPreviewAsync((x) =>
             {
                 preview = x;
-            }, instObj.transform, width, height, shouldCloneModel, shouldIgnoreParticleSystems);
+            }, instObj.transform,  posOffset,  rotOffset, width, height, shouldCloneModel, shouldIgnoreParticleSystems);
 
             for (int i = 0; i < 90000; i++)
             {
@@ -242,30 +244,30 @@ namespace LazyBuilder
             return preview;
         }
 
-        public static Texture2D GenerateModelPreview(Transform model, int width = 64, int height = 64, bool shouldCloneModel = false, bool shouldIgnoreParticleSystems = true)
+        public static Texture2D GenerateModelPreview(Transform model, Vector3 posOffset, Vector3 rotOffset, int width = 64, int height = 64, bool shouldCloneModel = false, bool shouldIgnoreParticleSystems = true)
         {
-            return GenerateModelPreviewInternal(model, null, null, width, height, shouldCloneModel, shouldIgnoreParticleSystems);
+            return GenerateModelPreviewInternal(model, null, null, width, height, shouldCloneModel, shouldIgnoreParticleSystems, posOffset, rotOffset);
         }
 
-        public static Texture2D GenerateModelPreviewWithShader(Transform model, Shader shader, string replacementTag, int width = 64, int height = 64, bool shouldCloneModel = false, bool shouldIgnoreParticleSystems = true)
+        public static Texture2D GenerateModelPreviewWithShader(Transform model, Shader shader, string replacementTag, Vector3 posOffset, Vector3 rotOffset, int width = 64, int height = 64, bool shouldCloneModel = false, bool shouldIgnoreParticleSystems = true)
         {
-            return GenerateModelPreviewInternal(model, shader, replacementTag, width, height, shouldCloneModel, shouldIgnoreParticleSystems);
+            return GenerateModelPreviewInternal(model, shader, replacementTag, width, height, shouldCloneModel, shouldIgnoreParticleSystems, posOffset, rotOffset);
         }
 
 #if UNITY_2018_2_OR_NEWER
-        public static void GenerateModelPreviewAsync(Action<Texture2D> callback, Transform model, int width = 64, int height = 64, bool shouldCloneModel = false, bool shouldIgnoreParticleSystems = true)
+        public static void GenerateModelPreviewAsync(Action<Texture2D> callback, Transform model, Vector3 posOffset, Vector3 rotOffset, int width = 64, int height = 64, bool shouldCloneModel = false, bool shouldIgnoreParticleSystems = true)
         {
-            GenerateModelPreviewInternal(model, null, null, width, height, shouldCloneModel, shouldIgnoreParticleSystems, callback);
+            GenerateModelPreviewInternal(model, null, null, width, height, shouldCloneModel, shouldIgnoreParticleSystems,  posOffset,  rotOffset, callback);
         }
 
-        public static void GenerateModelPreviewWithShaderAsync(Action<Texture2D> callback, Transform model, Shader shader, string replacementTag, int width = 64, int height = 64, bool shouldCloneModel = false, bool shouldIgnoreParticleSystems = true)
+        public static void GenerateModelPreviewWithShaderAsync(Action<Texture2D> callback, Transform model, Shader shader, string replacementTag, Vector3 posOffset, Vector3 rotOffset, int width = 64, int height = 64, bool shouldCloneModel = false, bool shouldIgnoreParticleSystems = true)
         {
-            GenerateModelPreviewInternal(model, shader, replacementTag, width, height, shouldCloneModel, shouldIgnoreParticleSystems, callback);
+            GenerateModelPreviewInternal(model, shader, replacementTag, width, height, shouldCloneModel, shouldIgnoreParticleSystems,  posOffset,  rotOffset, callback);
         }
 #endif
 
 #if UNITY_2018_2_OR_NEWER
-        private static Texture2D GenerateModelPreviewInternal(Transform model, Shader shader, string replacementTag, int width, int height, bool shouldCloneModel, bool shouldIgnoreParticleSystems, Action<Texture2D> asyncCallback = null)
+        private static Texture2D GenerateModelPreviewInternal(Transform model, Shader shader, string replacementTag, int width, int height, bool shouldCloneModel, bool shouldIgnoreParticleSystems, Vector3 posOffset, Vector3 rotOffset, Action<Texture2D> asyncCallback = null)
 #else
 	private static Texture2D GenerateModelPreviewInternal( Transform model, Shader shader, string replacementTag, int width, int height, bool shouldCloneModel, bool shouldIgnoreParticleSystems )
 #endif
@@ -337,6 +339,8 @@ namespace LazyBuilder
                     return null;
                 }
 
+                
+
 #if DEBUG_BOUNDS
 			if( !boundsDebugMaterial )
 			{
@@ -359,9 +363,15 @@ namespace LazyBuilder
                 renderCamera.aspect = (float)width / height;
                 renderCamera.transform.rotation = Quaternion.LookRotation(previewObject.rotation * m_previewDirection, previewObject.up);
 
-                CalculateCameraPosition(renderCamera, previewBounds, m_padding);
+                CalculateCameraPosition(renderCamera, previewBounds, m_padding+ posOffset.z);
 
                 renderCamera.farClipPlane = (renderCamera.transform.position - previewBounds.center).magnitude + previewBounds.size.magnitude;
+
+                posOffset.z = 0;
+                var absPosOffset = renderCamera.transform.TransformDirection(posOffset);
+
+                previewObject.transform.position += absPosOffset;
+                previewObject.transform.eulerAngles += rotOffset;
 
                 RenderTexture activeRT = RenderTexture.active;
                 RenderTexture renderTexture = null;
