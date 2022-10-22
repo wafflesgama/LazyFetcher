@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -16,57 +17,91 @@ namespace LazyBuilder
             serverPath = _serverPath;
         }
 
-        public async Task<string> GetRawFile(string src, string savePath, string fileName, string fileType)
+        public async Task<ServerResponse<string>> GetRawFile(string src, string savePath, string fileName, string fileType)
         {
-            var savedFile = $"{savePath}\\{fileName}.{fileType}";
-
-            string savedFilePath = $"{PathFactory.absoluteToolPath}\\{savePath}\\{fileName}.{fileType}";
-            var srcFilePath = $"{serverPath}\\{src}\\{fileName}.{fileType}";
-
-            savedFilePath = savedFilePath.AbsoluteFormat();
-            srcFilePath = srcFilePath.AbsoluteFormat();
-
-            if (File.Exists(savedFilePath))
-                File.Delete(savedFilePath);
-
-            File.Copy(srcFilePath, savedFilePath);
-
-            for (int i = 0; i < 9000; i++)
+            ServerResponse<string> response = new ServerResponse<string>();
+            try
             {
-                if (File.Exists(savedFilePath)) break;
-                await Task.Delay(10);
+
+                var savedFile = $"{savePath}\\{fileName}.{fileType}";
+
+                string savedFilePath = $"{PathFactory.absoluteToolPath}\\{savePath}\\{fileName}.{fileType}";
+                var srcFilePath = $"{serverPath}\\{src}\\{fileName}.{fileType}";
+
+                savedFilePath = savedFilePath.AbsoluteFormat();
+                srcFilePath = srcFilePath.AbsoluteFormat();
+
+                if (File.Exists(savedFilePath))
+                    File.Delete(savedFilePath);
+
+                File.Copy(srcFilePath, savedFilePath);
+
+                //Since the lack of File.CopyAsync - Added hammered workaround 
+                for (int i = 0; i < 9000; i++)
+                {
+                    if (File.Exists(savedFilePath)) break;
+                    await Task.Delay(10);
+                }
+
+                response.Data = savedFilePath;
+                response.Success = true;
             }
-            return savedFile;
-        }
-        public Task<string> GetRawString(string src, string fileName, string fileType)
-        {
-            src = src.AbsoluteFormat();
-
-            return File.ReadAllTextAsync($"{serverPath}\\{src}\\{fileName}.{fileType}");
-        }
-        public async Task<Texture2D> GetImage(string src, string saveFilePath, string imgName)
-        {
-            src = src.AbsoluteFormat();
-
-            var path = $"{serverPath}\\{src}\\{imgName}.{PathFactory.THUMBNAIL_TYPE}";
-
-            if (!File.Exists(path)) return null;
-
-            byte[] imageBytes = await File.ReadAllBytesAsync(path);
-
-            Texture2D image = new Texture2D(2, 2);
-            image.LoadImage(imageBytes);
-
-
-            if (saveFilePath != null)
+            catch (Exception e)
             {
-                if (!File.Exists(saveFilePath))
-                    File.Create(saveFilePath).Close();
-
-                File.WriteAllBytes(saveFilePath, imageBytes);
+                response.Success = false;
+                response.Error = e;
             }
+            return response;
+        }
+        public async Task<ServerResponse<string>> GetRawString(string src, string fileName, string fileType)
+        {
+            ServerResponse<string> response = new ServerResponse<string>();
+            try
+            {
+                src = src.AbsoluteFormat();
+                response.Data = await File.ReadAllTextAsync($"{serverPath}\\{src}\\{fileName}.{fileType}");
+                response.Success = true;
+            }
+            catch (Exception e)
+            {
+                response.Success = false;
+                response.Error = e;
+            }
+            return response;
+        }
+        public async Task<ServerResponse<Texture2D>> GetImage(string src, string saveFilePath, string imgName)
+        {
+            ServerResponse<Texture2D> response = new ServerResponse<Texture2D>();
+            try
+            {
+                src = src.AbsoluteFormat();
 
-            return image;
+                var path = $"{serverPath}\\{src}\\{imgName}.{PathFactory.THUMBNAIL_TYPE}";
+
+                if (!File.Exists(path)) return null;
+
+                byte[] imageBytes = await File.ReadAllBytesAsync(path);
+
+                response.Data = new Texture2D(2, 2);
+                response.Data.LoadImage(imageBytes);
+
+
+                if (saveFilePath != null)
+                {
+                    if (!File.Exists(saveFilePath))
+                        File.Create(saveFilePath).Close();
+
+                    File.WriteAllBytes(saveFilePath, imageBytes);
+                }
+
+                response.Success = true;
+            }
+            catch (Exception e)
+            {
+                response.Success = false;
+                response.Error = e;
+            }
+            return response;
         }
 
         public string GetFullPath()

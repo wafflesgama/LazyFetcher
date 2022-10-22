@@ -32,7 +32,9 @@ namespace LazyBuilder
 
         public const string UI_PATH = "Data/UI";
         public const string MESHES_PATH = "Data/Meshes";
+        
         public const string MATERIALS_PATH = "Data/Materials";
+        public const string MATERIALS_GROUND_FILE = "Lazy_Preview_Mat";
 
         public const string LAYOUT_TYPE = "uxml";
         public const string STYLE_TYPE = "uss";
@@ -43,10 +45,10 @@ namespace LazyBuilder
         public const string BUILDER_ITEM_LAYOUT_FILE = "BuilderItemLayout";
         public const string BUILDER_SERVER_ITEM_FILE = "BuilderServerItem";
 
+        public const string MESHES_GROUND_FILE = "Lazy_Preview_Ground";
         public const string MESH_TYPE = "fbx";
         public const string MATERIAL_TYPE = "mat";
 
-        public const string GROUND_FILE = "ground";
         
         public const string MARKDOWN_FILE = "AssetList";
 

@@ -36,7 +36,7 @@ namespace LazyBuilder
 
         private Button _openFolderBttn;
         private Button _singleThumbBttn;
-        
+
 
 
         private TextElement _id;
@@ -85,7 +85,7 @@ namespace LazyBuilder
                 ServerManager.SetServer(ServerManager.CreateServer(ServerManager.ServerType.LOCAL, preferences.LastServerSrc, null));
                 await ServerManager.FetchServerData();
 
-                loadedPath = ServerManager.server.GetFullPath();
+                loadedPath = ServerManager.GetServerPath();
                 _serverPath.value = loadedPath;
 
                 ReadCachedData();
@@ -236,7 +236,8 @@ namespace LazyBuilder
 
 
             //Null savePath to not store image
-            _thumbnail.style.backgroundImage = await ServerManager.server.GetImage(PathFactory.BuildItemPath(item.Id), null, PathFactory.THUMBNAIL_FILE);
+            Texture2D result = await ServerManager.GetImage(PathFactory.BuildItemPath(item.Id), null, PathFactory.THUMBNAIL_FILE);
+            _thumbnail.style.backgroundImage = result;
 
             _description.text = itemState.Item2;
 
@@ -405,12 +406,12 @@ namespace LazyBuilder
 
             for (int i = 0; i < items.Count; i++)
             {
-                var img = await ServerManager.server.GetImage(PathFactory.BuildItemPath(items[i].Id), null, PathFactory.THUMBNAIL_FILE);
+                var img = await ServerManager.GetImage(PathFactory.BuildItemPath(items[i].Id), null, PathFactory.THUMBNAIL_FILE);
                 if (missing && img != null) continue;
                 ItemSelected(items[i]);
                 await GenerateSingleThumbnail();
             }
-            
+
             this.ShowNotification(new GUIContent("Missing Thumbnails generated successfully!"), 1);
         }
 
@@ -541,14 +542,14 @@ namespace LazyBuilder
             text += "|-|-|-:|\n";
             foreach (var item in items)
             {
-            text += $"|![{item.Id}](./content/{item.Id}/thumbnail.png)| {item.Id}| {item.TypeIds.Count}|\n";
+                text += $"|![{item.Id}](./content/{item.Id}/thumbnail.png)| {item.Id}| {item.TypeIds.Count}|\n";
             }
-            
+
             var filePath = $"{loadedPath.AbsoluteFormat()}\\{PathFactory.MARKDOWN_FILE}.md";
             File.WriteAllText(filePath, text);
-            
+
             this.ShowNotification(new GUIContent("Asset List Markdown created successfully!"), 1);
-            
+
         }
     }
 }

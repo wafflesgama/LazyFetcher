@@ -16,8 +16,15 @@ namespace LazyBuilder
             LOCAL
         }
 
-        public static Server server { get; private set; }
         public static ServerData data { get; private set; }
+
+
+        public delegate void ServerCallback();
+        public static ServerCallback OnDisconnect;
+        public static ServerCallback OnInvalidData;
+        public static ServerCallback On404;
+
+        private static Server server;
 
         public static void SetServer(Server _server)
         {
@@ -25,26 +32,127 @@ namespace LazyBuilder
         }
         public static async Task<bool> FetchServerData()
         {
-            try
+            ServerResponse<string> response = await server.GetRawString("", PathFactory.MAIN_FILE, PathFactory.MAIN_TYPE);
+            if (!response.Success)
             {
-                var rawData = await server.GetRawString("", PathFactory.MAIN_FILE, PathFactory.MAIN_TYPE);
+                if (response.Error is System.Net.WebException && response.Error.Message.Contains("404"))
+                {
+                    if (On404 != null)
+                        On404.Invoke();
+                }
+                else if (response.Error is System.Net.WebException)
+                {
+                    if (OnDisconnect != null)
+                        OnDisconnect.Invoke();
+                }
+                else if (response.Error is System.IO.FileNotFoundException)
+                {
+                    if (OnInvalidData != null)
+                        OnInvalidData.Invoke();
+                }
 
-                if (rawData == null) return false;
-
-                //Debug.Log(rawData);
-                data = JsonConvert.DeserializeObject<ServerData>(rawData);
-                return true;
-            }
-            catch (Exception)
-            {
                 return false;
             }
+            try
+            {
+                data = JsonConvert.DeserializeObject<ServerData>(response.Data);
+
+                if (data.Items == null)
+                    throw new Exception();
+            }
+            catch (Exception ex)
+            {
+                if (OnInvalidData != null)
+                    OnInvalidData.Invoke();
+
+                return false;
+            }
+            return true;
 
         }
 
+        public static async Task<string> GetRawFile(string src, string savePath, string fileName, string fileType)
+        {
+            ServerResponse<string> response = await server.GetRawFile(src, savePath, fileName, fileType);
+
+            if (!response.Success)
+            {
+                if (response.Error is System.Net.WebException && response.Error.Message.Contains("404"))
+                {
+                    if (On404 != null)
+                        On404.Invoke();
+                }
+                else if (response.Error is System.Net.WebException)
+                {
+                    if (OnDisconnect != null)
+                        OnDisconnect.Invoke();
+                }
+                else if (response.Error is System.IO.FileNotFoundException)
+                {
+                    if (OnInvalidData != null)
+                        OnInvalidData.Invoke();
+                }
+
+                return string.Empty;
+            }
+            return response.Data;
+        }
+
+        public static async Task<string> GetRawString(string src, string fileName, string fileType)
+        {
+            ServerResponse<string> response = await server.GetRawString(src, fileName, fileType);
+
+            if (!response.Success)
+            {
+                if (response.Error is System.Net.WebException && response.Error.Message.Contains("404"))
+                {
+                    if (On404 != null)
+                        On404.Invoke();
+                }
+                else if (response.Error is System.Net.WebException)
+                {
+                    if (OnDisconnect != null)
+                        OnDisconnect.Invoke();
+                }
+                else if (response.Error is System.IO.FileNotFoundException)
+                {
+                    if (OnInvalidData != null)
+                        OnInvalidData.Invoke();
+                }
+
+            }
+            return response.Data;
+        }
+
+        public static async Task<Texture2D> GetImage(string src, string saveFilePath, string imgName)
+        {
+            ServerResponse<Texture2D> response = await server.GetImage(src, saveFilePath, imgName);
+
+            if (!response.Success)
+            {
+                if (response.Error is System.Net.WebException && response.Error.Message.Contains("404"))
+                {
+                    if (On404 != null)
+                        On404.Invoke();
+                }
+                else if (response.Error is System.Net.WebException)
+                {
+                    if (OnDisconnect != null)
+                        OnDisconnect.Invoke();
+                }
+                else if (response.Error is System.IO.FileNotFoundException)
+                {
+                    if (OnInvalidData != null)
+                        OnInvalidData.Invoke();
+                }
+                return null;
+            }
+            return response.Data;
+        }
+
+
         public static Server CreateServer(ServerType type, string src, string branch)
         {
-
             switch (type)
             {
                 case ServerType.GIT:
@@ -56,5 +164,7 @@ namespace LazyBuilder
             }
         }
         public static List<string> GetServerTypes() => Enum.GetNames(typeof(ServerType)).ToList();
+
+        public static string GetServerPath() => server.GetFullPath();
     }
 }

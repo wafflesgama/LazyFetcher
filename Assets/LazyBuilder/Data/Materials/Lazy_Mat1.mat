@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Lazy Mat 1
+  m_Name: Lazy_Mat1
   m_Shader: {fileID: -6465566751694194690, guid: 439f114ce9c8ec2408b406bf360f890b, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 2

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -19,6 +20,7 @@ namespace LazyBuilder
         public const string gitStandardPrefix = "https://github.com";
         public const string defaultRepo = "wafflesgama/LazyBuilderLibrary";
         public const string defaultBranch = "main";
+        public const string rawSuffix = "?raw=true";
 
         private string gitRepo;
         private string gitBranch;
@@ -30,114 +32,139 @@ namespace LazyBuilder
             storedImages = new Dictionary<string, Texture2D>();
         }
 
-        public async Task<string> GetRawFile(string subUrl, string savePath, string fileName, string fileType)
+        public async Task<ServerResponse<string>> GetRawFile(string subUrl, string savePath, string fileName, string fileType)
         {
-            using (var client = new WebClient())
+            ServerResponse<string> response = new ServerResponse<string>();
+            try
             {
-                TaskCompletionSource<bool> processFinished = new TaskCompletionSource<bool>();
-
-                client.DownloadFileCompleted += (sender, e) =>
+                using (var client = new WebClient())
                 {
 
-                    //Debug.Log($"Asset fetched- {fileName}.{fileType}");
-                    AssetDatabase.Refresh();
-                    processFinished.SetResult(!e.Cancelled && e.Error == null);
-                };
+                    TaskCompletionSource<bool> processFinished = new TaskCompletionSource<bool>();
 
-                string savedFilePath = $"{PathFactory.absoluteToolPath}/{savePath}/{fileName}.{fileType}";
-                string urlFullPath = $"{gitStandardPrefix}/{gitRepo}/{gitBlob}/{gitBranch}/{subUrl}/{fileName}.{fileType}?raw=true";
+                    client.DownloadFileCompleted += (sender, e) =>
+                    {
+                        AssetDatabase.Refresh();
 
-                //Debug.Log($"Fetching file from: {urlFullPath}");
-                //Debug.Log($"Saving  file to: {savedFilePath}");
+                        bool success = !e.Cancelled && e.Error == null;
+                        response.Success = success;
+                        response.Error = e.Error;
 
+                        processFinished.SetResult(success);
+                    };
 
-                client.DownloadFileAsync(new System.Uri(urlFullPath), savedFilePath);
-                if (await processFinished.Task)
-                    return savedFilePath;
+                    string savedFilePath = $"{PathFactory.absoluteToolPath}/{savePath}/{fileName}.{fileType}";
+                    string urlFullPath = $"{gitStandardPrefix}/{gitRepo}/{gitBlob}/{gitBranch}/{subUrl}/{fileName}.{fileType}{rawSuffix}";
 
-                return string.Empty;
+                    client.DownloadFileAsync(new System.Uri(urlFullPath), savedFilePath);
+
+                    var result = await processFinished.Task;
+
+                    response.Data = result ? savedFilePath : string.Empty;
+
+                }
             }
-        }
-
-        public async Task<string> GetRawString(string src, string fileName, string fileType)
-        {
-            using (var client = new WebClient())
+            catch (Exception e)
             {
-                TaskCompletionSource<(bool, string)> processFinished = new TaskCompletionSource<(bool, string)>();
-                client.DownloadDataCompleted += (sender, e) =>
-                {
-                    Debug.Log("String fetched");
-                    processFinished.SetResult((!e.Cancelled && e.Error == null, System.Text.Encoding.Default.GetString(e.Result)));
-                };
-
-                //string savedFilePath = $"{localPath}/{fileName}.{fileType}";
-                string urlFullPath = $"{gitStandardPrefix}/{gitRepo}/{gitBlob}/{gitBranch}/{src}/{fileName}.{fileType}?raw=true";
-
-                client.DownloadDataAsync(new System.Uri(urlFullPath));
-
-                var processResult = await processFinished.Task;
-
-                if (processResult.Item1)
-                    return processResult.Item2;
-                return string.Empty;
+                response.Success = false;
+                response.Error = e;
             }
+            return response;
+        }
+
+        public async Task<ServerResponse<string>> GetRawString(string src, string fileName, string fileType)
+        {
+            ServerResponse<string> response = new ServerResponse<string>();
+            try
+            {
+                using (var client = new WebClient())
+                {
+                    TaskCompletionSource<bool> processFinished = new TaskCompletionSource<bool>();
+                    client.DownloadDataCompleted += (sender, e) =>
+                    {
+                        bool success = !e.Cancelled && e.Error == null;
+                        response.Success = success;
+                        response.Data = success ? System.Text.Encoding.Default.GetString(e.Result) : string.Empty;
+                        response.Error = e.Error;
+
+                        processFinished.SetResult(success);
+                    };
+
+                    string urlFullPath = $"{gitStandardPrefix}/{gitRepo}/{gitBlob}/{gitBranch}/{src}/{fileName}.{fileType}?raw=true";
+
+                    client.DownloadDataAsync(new System.Uri(urlFullPath));
+
+                    var processResult = await processFinished.Task;
+
+                    await processFinished.Task;
+
+                }
+            }
+            catch (Exception e)
+            {
+                response.Success = false;
+                response.Error = e;
+            }
+            return response;
         }
 
 
-        public async Task<Texture2D> GetImage(string subPath, string saveFilePath, string imgName)
+        public async Task<ServerResponse<Texture2D>> GetImage(string subPath, string saveFilePath, string imgName)
         {
+            ServerResponse<Texture2D> response = new ServerResponse<Texture2D>();
             var url = $"{gitRawPrefix}/{gitRepo}/{gitBranch}/{subPath}/{imgName}.{PathFactory.THUMBNAIL_TYPE}";
-            //Debug.Log($"Fetching img from: {url}");
 
-            Texture2D image;
-
-            if (storedImages.ContainsKey(url))
+            try
             {
-                image = storedImages[url];
-            }
-            else
-            {
-
-
-                UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url);
-
-                //bool finished = false;
-                //uwr.SendWebRequest().completed += (e) => finished = true;
-                uwr.SendWebRequest();
-
-                while (!uwr.isDone)
-                    await Task.Delay(15);
-
-                if (uwr.result != UnityWebRequest.Result.Success)
+                if (storedImages.ContainsKey(url))
                 {
-                    Debug.LogError(uwr.error);
-                    return null;
+                    response.Data = storedImages[url];
+                    response.Success = true;
+                }
+                else
+                {
+                    UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url);
+
+                    //bool finished = false;
+                    //uwr.SendWebRequest().completed += (e) => finished = true;
+                    uwr.SendWebRequest();
+
+                    while (!uwr.isDone)
+                        await Task.Delay(15);
+
+                    if (uwr.result != UnityWebRequest.Result.Success)
+                    {
+                        Debug.LogError(uwr.error);
+                        return null;
+                    }
+
+                    response.Data = DownloadHandlerTexture.GetContent(uwr);
+
+                    //Re check in case of concurrency + delay
+                    if (!storedImages.ContainsKey(url))
+                        storedImages.Add(url, response.Data);
                 }
 
-                image = DownloadHandlerTexture.GetContent(uwr);
+                //If specified a Save Path - saves the Texture2D
+                if (saveFilePath != null)
+                {
+                    var bytes = response.Data.EncodeToPNG();
 
-                //Re check in case of concurrency + delay
-                if (!storedImages.ContainsKey(url))
-                    storedImages.Add(url, image);
+                    if (!File.Exists(saveFilePath))
+                        File.Create(saveFilePath).Close();
+
+                    await File.WriteAllBytesAsync(saveFilePath, bytes);
+
+                }
+
+                response.Success = true;
             }
-
-            if (saveFilePath != null)
+            catch (Exception e)
             {
-                var bytes = image.EncodeToPNG();
-
-                //AssetDatabase.StartAssetEditing();
-                //var tempFilePath=$"{Application.temporaryCachePath}/writeThumbnail.{PathFactory.THUMBNAIL_TYPE}";
-
-                //if(File.Exists(tempFilePath))
-                if (!File.Exists(saveFilePath))
-                    File.Create(saveFilePath).Close();
-
-                await File.WriteAllBytesAsync(saveFilePath, bytes);
-                
-                //AssetDatabase.StopAssetEditing();
+                response.Success = false;
+                response.Error = e;
             }
-
-            return image;
+            return response;
         }
 
         public string GetFullPath()

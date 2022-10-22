@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Lazy Vertext Color Mat
+  m_Name: Lazy_VColor_Mat
   m_Shader: {fileID: -6465566751694194690, guid: a88582cbd9b3fd24b8d8f680fc838031, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 2

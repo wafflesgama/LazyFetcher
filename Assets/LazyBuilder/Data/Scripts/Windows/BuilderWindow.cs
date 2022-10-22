@@ -19,6 +19,8 @@ namespace LazyBuilder
         private Dictionary<string, Server> serverList;
 
         private ServerData storedData;
+        List<Item> currentItems;
+        List<Item> currentItemsInPage;
 
         private int currentPageIndex;
 
@@ -50,6 +52,10 @@ namespace LazyBuilder
         private VisualElement _saveServersIcon;
         private VisualElement _selectedListServer;
 
+        //Data Pages (Items & Error Pages)
+        private VisualElement _mainPage;
+        private VisualElement _errorPage;
+        private Label _errorMessage;
 
         //Pagination
         private TextElement _pageIndexMssg;
@@ -88,6 +94,7 @@ namespace LazyBuilder
 
         private PreviewRenderUtility previewRenderUtility;
         private Transform previewTransform;
+        private Label _previewLoaderText;
         private bool renderPreview;
 
         private GameObject previewObj;
@@ -117,6 +124,7 @@ namespace LazyBuilder
         private VisualTreeAsset _itemTemplate;
 
         private Vector2 lastMousePos;
+        //private bool isLoadingPrev;
         private bool isRotatingPrev;
         private bool isTranslatingPrev;
 
@@ -125,6 +133,9 @@ namespace LazyBuilder
         const string MAINPOOL_MSG = "Main";
         const string NEWPOOL_MSG = "Edit servers...";
         const string GROUNDMESHNOT_MSG = "Ground mesh couldn't be fetched";
+        const string NO_CONNECTION_MSG = "No connection to this library";
+        const string NOT_FOUND_MSG = "The library URL appears to broken or incomplete";
+        const string INVALID_DATA_MSG = "The library does not follow the standard structre";
 
 
         #region Unity Functions
@@ -148,7 +159,7 @@ namespace LazyBuilder
             SetupInputCallbacks();
 
             SetupPagination();
-            SwitchPanel();
+            SwitchSidePanel();
             SetupIcons();
             SetupCamera();
 
@@ -241,6 +252,11 @@ namespace LazyBuilder
             _saveServersBttn = (Button)_root.Q("SaveServersBttn");
             _saveServersIcon = _root.Q("SaveServersIcon");
 
+            //Data Pages
+            _mainPage = _root.Q("MainPage");
+            _errorPage = _root.Q("ErrorPage");
+            _errorMessage = (Label)_root.Q("Error_Subtitle");
+
             //Pagination
             _prevPageBttn = (Button)_root.Q("PrevPageBttn");
             _nextPageBttn = (Button)_root.Q("NextPageBttn");
@@ -259,6 +275,7 @@ namespace LazyBuilder
 
             _generateBttn = (Button)_root.Q("GenerateBttn");
             _generateBttnIcon = _root.Q("GenerateBttnIcon");
+            _previewLoaderText = (Label)_root.Q("PreviewLoaderT");
 
             _colorPallete = _root.Q("Pallete");
 
@@ -279,6 +296,13 @@ namespace LazyBuilder
 
         private void SetupCallbacks()
         {
+            //Server State Callbacks
+            ServerManager.On404 += () => SwitchToErrorPage(NOT_FOUND_MSG);
+            ServerManager.OnDisconnect += () => SwitchToErrorPage(NO_CONNECTION_MSG);
+            ServerManager.OnInvalidData += () => SwitchToErrorPage(INVALID_DATA_MSG);
+
+
+
             //Server Choose
             _serversDropdown.RegisterValueChangedCallback(x => ServerChanged(x.newValue));
 
@@ -286,7 +310,7 @@ namespace LazyBuilder
             _addServerBttn.clicked += AddServer;
             _removeServerBttn.clicked += RemoveServer;
             _saveServersBttn.clicked += SaveEditServers;
-            _serversBackBttn.clicked += () => SwitchPanel(true);
+            _serversBackBttn.clicked += () => SwitchSidePanel(true);
 
             //Pagination
             _prevPageBttn.clicked += () => ChangePage(false);
@@ -310,29 +334,36 @@ namespace LazyBuilder
 
         private async void SetupItems(List<Item> items = null)
         {
+            string initServerId = ServerManager.GetServerPath();
             _grid.Clear();
 
             if (items == null)
                 items = GetItemList();
 
             //Pagination
-            items = items.Skip(currentPageIndex * preferences.PageSize).Take(preferences.PageSize).ToList();
+            currentItems = items;
+            currentItemsInPage = currentItems.Skip(currentPageIndex * preferences.PageSize).Take(preferences.PageSize).ToList();
 
-            for (int i = 0; i < items.Count; i++)
+            for (int i = 0; i < currentItemsInPage.Count; i++)
             {
-                //If window is destroyed - stop setting up items
+                //If window is destroyed - stop setting up 
                 if (this == null) return;
+
+                //If server changed mid Seup - stop setting up
+                if (initServerId != ServerManager.GetServerPath()) return;
 
                 if (_itemTemplate == null)
                     _itemTemplate = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath(
                         PathFactory.BuildUiFilePath(PathFactory.BUILDER_ITEM_LAYOUT_FILE), typeof(VisualTreeAsset));
 
                 var element = _itemTemplate.CloneTree();
-                SetupItem(element, items[i].Id, i, PathFactory.BuildItemPath(items[i].Id));
+                SetupItem(element, currentItemsInPage[i].Id, i, PathFactory.BuildItemPath(currentItemsInPage[i].Id));
                 _grid.Add(element);
                 await Task.Delay(1);
             }
 
+            RefreshPageButtonsState();
+            RefreshPageIndexMessage();
             SelectDefaultItem();
         }
 
@@ -361,7 +392,7 @@ namespace LazyBuilder
             button.tooltip = name;
 
             //Add Callback
-            button.clicked += () => ItemSelected(name, index, img);
+            button.clicked += () => ItemSelected(name, img);
 
             if (!HasStoredItem(name))
             {
@@ -371,7 +402,7 @@ namespace LazyBuilder
         }
 
 
-        private void SwitchPanel(bool mainView = true)
+        private void SwitchSidePanel(bool mainView = true)
         {
             _mainTabContainer.style.display = mainView ? DisplayStyle.Flex : DisplayStyle.None;
             renderPreview = mainView;
@@ -390,7 +421,8 @@ namespace LazyBuilder
 
         private void SetupPreviewUtils()
         {
-            GameObject groundObj = AssetDatabase.LoadAssetAtPath(PathFactory.BuildMeshFilePath(PathFactory.GROUND_FILE),
+            GameObject groundObj = AssetDatabase.LoadAssetAtPath(
+                PathFactory.BuildMeshFilePath(PathFactory.MESHES_GROUND_FILE),
                 typeof(UnityEngine.Object)) as GameObject;
 
             if (groundObj == null)
@@ -401,7 +433,7 @@ namespace LazyBuilder
 
             groundMesh = groundObj.GetComponent<MeshFilter>().sharedMesh;
             groundMat = AssetDatabase.LoadAssetAtPath<Material>(
-                PathFactory.BuildMaterialFilePath(PathFactory.GROUND_FILE));
+                PathFactory.BuildMaterialFilePath(PathFactory.MATERIALS_GROUND_FILE));
         }
 
         private void SetupCamera()
@@ -632,15 +664,16 @@ namespace LazyBuilder
             {
                 path = $"{PathFactory.relativeToolPath}/{PathFactory.STORED_ITEMS_PATH}/{selectedFile}";
             }
-            //If Temp file does not exist
+            //If Stored file does not exist
             else
             {
+                //If Temp file does not exist
                 if (!tempResult)
                 {
                     LogMessage("Fetching item name" + filename);
 
                     //Fetch File from server and add to Temp list
-                    await ServerManager.server.GetRawFile(PathFactory.BuildItemPath(selectedItem),
+                    await ServerManager.GetRawFile(PathFactory.BuildItemPath(selectedItem),
                         PathFactory.TEMP_ITEMS_PATH, filename, PathFactory.MESH_TYPE);
                     AssetDatabase.Refresh();
                     AddTempFile(selectedFile);
@@ -656,7 +689,9 @@ namespace LazyBuilder
         {
             //If online search - fetch from server
             if (!onlyLocalSearch)
-                return await ServerManager.server.GetImage(path, null, PathFactory.THUMBNAIL_FILE);
+            {
+                return await ServerManager.GetImage(path, null, PathFactory.THUMBNAIL_FILE);
+            }
 
             //Else - fetch from local thumbnails folder
 
@@ -788,6 +823,7 @@ namespace LazyBuilder
         private void Search()
         {
             List<Item> items = GetItemList();
+            ResetPage();
 
             var searchVal = _searchBar.value;
 
@@ -872,6 +908,20 @@ namespace LazyBuilder
             shadow.style.opacity = 1;
         }
 
+
+        private async void PreviewLoadAnimFrame()
+        {
+
+
+            if (_previewLoaderText.text == "..." || _previewLoaderText.text == "")
+                _previewLoaderText.text = ".";
+            else if (_previewLoaderText.text == ".")
+                _previewLoaderText.text = "..";
+            else if (_previewLoaderText.text == "..")
+                _previewLoaderText.text = "...";
+        }
+
+
         #endregion Animation
 
         #region Object Generation
@@ -907,7 +957,7 @@ namespace LazyBuilder
             var localPath =
                 $"{PathFactory.absoluteToolPath}\\{PathFactory.STORED_THUMB_PATH}\\{selectedItem}.{PathFactory.THUMBNAIL_TYPE}";
             if (!File.Exists(localPath))
-                await ServerManager.server.GetImage(PathFactory.BuildItemPath(selectedItem), localPath,
+                await ServerManager.GetImage(PathFactory.BuildItemPath(selectedItem), localPath,
                     PathFactory.THUMBNAIL_FILE);
 
             Close();
@@ -952,6 +1002,24 @@ namespace LazyBuilder
 
         #endregion Object Generation
 
+        #region Data Pages
+        private void SwitchToMainPage()
+        {
+            _mainPage.style.display = DisplayStyle.Flex;
+            _errorPage.style.display = DisplayStyle.None;
+
+        }
+
+        private void SwitchToErrorPage(string message)
+        {
+            _grid.Clear();
+            _errorMessage.text = message;
+            _mainPage.style.display = DisplayStyle.None;
+            _errorPage.style.display = DisplayStyle.Flex;
+        }
+
+        #endregion Data Pages
+
         #region Colour Picker
 
         private VisualElement CreateColorPicker(Color color)
@@ -990,7 +1058,6 @@ namespace LazyBuilder
 
         #endregion Colour Picker
 
-
         #region Pagination
 
         private void SetupPagination()
@@ -1014,8 +1081,13 @@ namespace LazyBuilder
         private void ChangePage(bool next)
         {
             currentPageIndex += next ? 1 : -1;
-            RefreshPageIndexMessage();
             SetupItems();
+        }
+
+        private void ResetPage()
+        {
+            currentPageIndex = 0;
+            RefreshPageButtonsState();
         }
 
         private void ChangePageSize(string newSize)
@@ -1025,46 +1097,57 @@ namespace LazyBuilder
 
             currentPageIndex = 0;
 
+            RefreshPageButtonsState();
             SetupItems();
             RefreshPageIndexMessage();
             UpdatePreferences();
         }
 
+        private void RefreshPageButtonsState()
+        {
+            var totalItems = currentItems.Count;
+            _prevPageBttn.SetEnabled(currentPageIndex - 1 >= 0);
+            _nextPageBttn.SetEnabled((currentPageIndex + 1) * preferences.PageSize < totalItems);
+        }
+
         private void RefreshPageIndexMessage()
         {
-            int totalResults = GetItemList().Count;
+            if (currentItems == null) return;
+
+            int totalResults = currentItems.Count;
             int initIndex = currentPageIndex * preferences.PageSize;
             int lastIndex = Mathf.Min(initIndex + preferences.PageSize, totalResults);
             _pageIndexMssg.text = $"{initIndex}-{lastIndex} of {totalResults} Results";
-        } 
+        }
 
         #endregion Pagination
 
         #region Item & Type Selected
 
-        private void ItemSelected(string itemId, int index, Texture2D icon = null, bool manualTypeSelect = false)
+        private void ItemSelected(string itemId, Texture2D icon = null, bool manualTypeSelect = false)
         {
             if (selectedItem == itemId) return;
 
             _generateBttn.SetEnabled(false);
+
+            List<string> choices;
+            List<Item> items = GetItemList();
+
+
+
             preferences.LastItem = itemId;
-
-
             selectedItem = itemId;
-            //lastSessionItem = itemId;
+
+            choices = items.Where(x => x.Id == itemId).FirstOrDefault().TypeIds;
+
+
             _mainImg.style.backgroundImage = icon;
             _mainTitle.text = itemId.Capitalize().SeparateCase();
 
             _propRb.value = preferences.Prop_Rb;
             _propCol.value = preferences.Prop_Col;
 
-            List<string> choices;
-            List<Item> items = GetItemList();
 
-            if (onlyLocalSearch)
-                choices = items.Where(x => x.Id == itemId).FirstOrDefault().TypeIds;
-            else
-                choices = items[index].TypeIds;
 
             for (int i = 0; i < choices.Count; i++)
             {
@@ -1093,6 +1176,7 @@ namespace LazyBuilder
 
             if (string.IsNullOrEmpty(value)) return;
 
+
             //Update Preferences
             preferences.LastItemType = value;
             UpdatePreferences();
@@ -1106,6 +1190,7 @@ namespace LazyBuilder
             _propName.value = $"{value.Capitalize()} {selectedItem.Capitalize()}";
 
             string objPath = await GetItem(selectedItem, value);
+
             previewObj = AssetDatabase.LoadAssetAtPath(objPath, typeof(UnityEngine.Object)) as GameObject;
 
             if (previewObj == null)
@@ -1116,6 +1201,9 @@ namespace LazyBuilder
 
 
             var meshRend = previewObj.gameObject.GetComponent<MeshRenderer>();
+
+            if (meshRend == null) return;
+
             previewMats = meshRend.sharedMaterials;
             previewColors = new List<Color>();
 
@@ -1143,6 +1231,9 @@ namespace LazyBuilder
             var objectSizes = bounds.max - bounds.min;
             var objectSize = Mathf.Max(objectSizes.x, objectSizes.y, objectSizes.z);
 
+            //isLoadingPrev = false;
+
+
             if (previewRenderUtility == null || previewRenderUtility.camera == null) return;
 
             // Visible height 1 meter in front
@@ -1151,9 +1242,9 @@ namespace LazyBuilder
             var distance = 1 * objectSize / cameraView;
             // Estimated offset from the center to the outside of the object
             distance += 0.5f * objectSize;
-            
+
             _generateBttn.SetEnabled(true);
-            
+
             previewRenderUtility.camera.transform.RotateAround(previewMesh.bounds.center, Vector3.up, Time.deltaTime);
             await Task.Delay(3);
 
@@ -1171,13 +1262,23 @@ namespace LazyBuilder
         {
             if (preferences.LastItem != null && preferences.LastItemType != null)
             {
-                int index;
-
                 List<Item> items = GetItemList();
-                index = items.TakeWhile(x => x.Id != preferences.LastItem).Count();
+
+                var lastItem = items.Where(x => x.Id == preferences.LastItem).FirstOrDefault();
+                if (lastItem == null)
+                {
+                    LogMessage("Last selected Item Id is not in this library", 1);
+                    return;
+                }
+
+                if (!lastItem.TypeIds.Where(x => x == preferences.LastItemType).Any())
+                {
+                    LogMessage("Last selected Item Type Id is not in this library", 1);
+                    return;
+                }
 
                 //Manual selection set to 'true' to avoid auto selecting a typeId 
-                ItemSelected(preferences.LastItem, index, null, true);
+                ItemSelected(preferences.LastItem, null, true);
                 ItemTypeSelected(preferences.LastItemType);
             }
         }
@@ -1339,17 +1440,25 @@ namespace LazyBuilder
         {
             if (newServer == NEWPOOL_MSG)
             {
-                SwitchPanel(false);
+                SwitchSidePanel(false);
                 return;
             }
 
-            Server currentServer = serverList[newServer];
-            ServerManager.SetServer(currentServer);
+            if (newServer != LOCALPOOL_MSG)
+            {
+                Server currentServer = serverList[newServer];
+                ServerManager.SetServer(currentServer);
+                var result = await ServerManager.FetchServerData();
+                if (!result)
+                {
+                    return;
+                    //Debug.Log()
+                }
+            }
 
-            await ServerManager.FetchServerData();
 
-
-            SwitchPanel(true);
+            SwitchToMainPage();
+            SwitchSidePanel(true);
             _serverDropSelected.text = newServer;
 
 
