@@ -60,3 +60,6 @@ crashlytics-build.properties
 
 .idea
 UserSettings
+Assets/LazyBuilder/Data/Temp/Items
+Assets/LazyBuilder/Data/Thumbnails
+Assets/LazyBuilder/Data/Items
