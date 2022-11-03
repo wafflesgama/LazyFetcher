@@ -9,6 +9,7 @@ namespace LazyBuilder
 {
     public class BuilderPreferences
     {
+
         [JsonProperty("LastServer")]
         public string LastServer { get; set; }
 
@@ -39,6 +40,26 @@ namespace LazyBuilder
         [JsonProperty("PageSize")]
         public int PageSize { get; set; }
 
+        public void SetDefaultValues()
+        {
+            LastServer = "";
+            LastItem = "";
+            LastItemType = "";
+
+            Servers_Id = new List<string>();
+            Servers_Id.Add("Main");
+            Servers_Type = new List<ServerType>();
+            Servers_Type.Add(ServerType.GIT);
+            Servers_src = new List<string>();
+            Servers_src.Add(Server_Git.defaultRepo);
+            Servers_branch = new List<string>();
+            Servers_branch.Add(Server_Git.defaultBranch);
+
+            Prop_Col = false;
+            Prop_Rb = false;
+
+            PageSize = 50;
+        }
     }
 
     public class ManagerPreferences
@@ -79,6 +100,11 @@ namespace LazyBuilder
             // Write that JSON string to the specified file.
             var filePath = $"{PathFactory.absoluteToolPath}\\{PathFactory.PREFS_PATH.AbsoluteFormat()}\\{fileName}.json";
             File.WriteAllText(filePath, json);
+
+        }
+
+        public static void ResetPreference(string filename)
+        {
 
         }
     }

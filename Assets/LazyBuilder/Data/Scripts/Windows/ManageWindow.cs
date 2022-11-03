@@ -15,56 +15,61 @@ namespace LazyBuilder
         private ManagerPreferences preferences;
         private ServerData cachedData;
 
+        private string loadedPath;
         private Item selectedItem;
         private List<Item> items;
 
         private VisualElement _root;
-
         private VisualElement _list;
 
-        private TextField _serverPath;
-
+        //Style Templates
         private VisualTreeAsset _itemTemplate;
         private StyleSheet _itemStyleTemplate;
 
+        //Header Area
+        private TextField _serverPath;
+        private Button _loadBttn;
 
-        private Button _loadBtn;
+
+        //Footer Area
         private Button _allDataBttn;
         private Button _allThumbBttn;
         private Button _missingThumbBttn;
         private Button _markdownBttn;
 
-        private Button _openFolderBttn;
-        private Button _singleThumbBttn;
 
-
-
+        //Side Tab Area - Header
         private TextElement _id;
         private VisualElement _thumbnail;
         private VisualElement _descriptionContainer;
         private TextElement _description;
-        private VisualElement _tags;
+
+
+        //Side Tab Area - Properties
         private VisualElement _types;
-
-
-
         private DropdownField _typesScreen;
-        private TextField _posOffsetX;
-        private TextField _posOffsetY;
-        private TextField _posOffsetZ;
+        private VisualElement _tags;
+        private List<TextField> _editableTags;
+        private int tagInEdit;
+        private Button _addTagBttn, _removeTagBttn, _saveTagsBttn;
 
-        private TextField _rotOffsetX;
-        private TextField _rotOffsetY;
-        private TextField _rotOffsetZ;
+        //Side Tab Area - Properties - Thumbnail Gen
+        private TextField _posOffsetX, _posOffsetY, _posOffsetZ;
+        private TextField _rotOffsetX, _rotOffsetY, _rotOffsetZ;
 
-        private string loadedPath;
 
+        //Side Tab Area - Footer
+        private Button _openFolderBttn;
+        private Button _singleThumbBttn;
+
+        //Messages
         const string NOENTRY_MSG = "This item has no entry in the JSON file";
         const string NODATA_MSG = "This JSON entry has no data";
         const string NOTAGS_MSG = "This item does not have any tags";
         const string NOTYPES_MSG = "This item does not have any types";
         const string NOMATCHTYPES_MSG = "The item types do not match the JSON entry";
         const string OK_MSG = "All fields are correct";
+        const string NEW_TAG_MSG = "New Tag";
 
         #region Unity Functions
 
@@ -73,6 +78,8 @@ namespace LazyBuilder
             MainController.Init(this);
 
             InitPreferences();
+
+            InitVars(); ;
 
             SetupBaseUI();
             SetupBindings();
@@ -98,7 +105,11 @@ namespace LazyBuilder
         #endregion Unity Functions
 
 
-
+        private void InitVars()
+        {
+            tagInEdit = -1;
+            _editableTags = new List<TextField>();
+        }
         private void SetupBaseUI()
         {
             _root = rootVisualElement;
@@ -111,49 +122,65 @@ namespace LazyBuilder
 
         private void SetupBindings()
         {
-            //_list = (ListView)_root.Q("List");
             _list = _root.Q("List");
-            _serverPath = (TextField)_root.Q("Path");
 
+            //Header Area
+            _serverPath = (TextField)_root.Q("Path");
+            _loadBttn = (Button)_root.Q("Load");
+
+            //Footer Area
             _allDataBttn = (Button)_root.Q("Autofill");
             _allThumbBttn = (Button)_root.Q("FillThumb");
             _missingThumbBttn = (Button)_root.Q("FillMThumb");
             _markdownBttn = (Button)_root.Q("FillMd");
 
-            _loadBtn = (Button)_root.Q("Load");
-
-            _openFolderBttn = (Button)_root.Q("OpenFolder");
-            _singleThumbBttn = (Button)_root.Q("SingleThumb");
-
+            //Side Tab Area - Header
             _id = (TextElement)_root.Q("Id");
             _thumbnail = _root.Q("Thumbnail");
             _descriptionContainer = _root.Q("DescriptionContainer");
             _description = (TextElement)_root.Q("Description");
-            _tags = _root.Q("Tags");
+
+            //Side Tab Area - Properties
             _types = _root.Q("Types");
-
             _typesScreen = (DropdownField)_root.Q("ItemTypeScreen");
+            _tags = _root.Q("Tags");
+            _addTagBttn = (Button)_root.Q("AddTag");
+            _removeTagBttn = (Button)_root.Q("RemoveTag");
+            _saveTagsBttn = (Button)_root.Q("SaveTags");
 
+            //Side Tab Area - Properties - Thumbnail Gen
             _posOffsetX = (TextField)_root.Q("PosX");
             _posOffsetY = (TextField)_root.Q("PosY");
             _posOffsetZ = (TextField)_root.Q("PosZ");
-
             _rotOffsetX = (TextField)_root.Q("RotX");
             _rotOffsetY = (TextField)_root.Q("RotY");
             _rotOffsetZ = (TextField)_root.Q("RotZ");
 
+            //Side Tab Area - Footer
+            _openFolderBttn = (Button)_root.Q("OpenFolder");
+            _singleThumbBttn = (Button)_root.Q("SingleThumb");
 
         }
 
         private void SetupCallbacks()
         {
-            _loadBtn.RegisterCallback<ClickEvent>((x) => LoadNewServer());
-            _openFolderBttn.RegisterCallback<ClickEvent>((x) => OpenFolder());
-            _singleThumbBttn.RegisterCallback<ClickEvent>((x) => GenerateSingleThumbnail());
+            //Header Area
+            _loadBttn.RegisterCallback<ClickEvent>((x) => LoadServer());
+
+            //Footer Area
             _allThumbBttn.RegisterCallback<ClickEvent>((x) => GenerateThumbnails(false));
             _missingThumbBttn.RegisterCallback<ClickEvent>((x) => GenerateThumbnails(true));
             _allDataBttn.RegisterCallback<ClickEvent>((x) => AutoWriteData());
             _markdownBttn.RegisterCallback<ClickEvent>((x) => CreateMarkdownList());
+
+            //Side Area Properties
+            _addTagBttn.RegisterCallback<ClickEvent>((x) => AddTag());
+            _removeTagBttn.RegisterCallback<ClickEvent>((x) => RemoveTag());
+            _saveTagsBttn.RegisterCallback<ClickEvent>((x) => SaveTags());
+
+            //Side Area - Footer
+            _openFolderBttn.RegisterCallback<ClickEvent>((x) => OpenFolder());
+            _singleThumbBttn.RegisterCallback<ClickEvent>((x) => GenerateSingleThumbnail());
         }
 
         private void SetupItems()
@@ -256,18 +283,21 @@ namespace LazyBuilder
             {
                 var cachedItem = cachedData.Items.Where(x => x.Id == item.Id).FirstOrDefault();
 
+                //First Add Type Ids of the list
                 foreach (var type in item.TypeIds)
                 {
-                    var tagElement = new TextElement();
-                    tagElement.text = type;
+                    var typeIdElement = new TextElement();
+                    typeIdElement.text = type;
 
+                    //If item in list is not present in folder data - gray it
                     if (cachedItem != null && !cachedItem.TypeIds.Contains(type))
-                        tagElement.style.color = Color.red;
+                        typeIdElement.style.opacity = .5f;
 
-                    tagElement.style.marginBottom = 2;
-                    _types.Add(tagElement);
+                    typeIdElement.style.marginBottom = 2;
+                    _types.Add(typeIdElement);
                 }
 
+                //Then Add Type Ids of the read folder data
                 if (itemState.Item1 == 2 && cachedItem != null)
                 {
                     foreach (var type in cachedItem.TypeIds)
@@ -275,27 +305,25 @@ namespace LazyBuilder
                         //If its already in the list - skip
                         if (item.TypeIds.Contains(type)) continue;
 
-                        //if (_types.Children().Where(x => ((TextElement)x).text == type).Any()) continue;
-
-                        var tagElement = new TextElement();
-                        tagElement.text = type;
-                        tagElement.style.color = Color.yellow;
-                        tagElement.style.marginBottom = 2;
-                        _types.Add(tagElement);
+                        var typeIdElement = new TextElement();
+                        typeIdElement.text = type;
+                        typeIdElement.style.color = Color.yellow;
+                        typeIdElement.style.marginBottom = 2;
+                        _types.Add(typeIdElement);
                     }
                 }
             }
 
 
             _tags.Clear();
+            _editableTags.Clear();
+            _saveTagsBttn.SetEnabled(false);
+            _removeTagBttn.SetEnabled(false);
             if (item.Tags != null)
             {
                 foreach (var tag in item.Tags)
                 {
-                    var tagElement = new TextElement();
-                    tagElement.text = tag;
-                    tagElement.style.marginBottom = 2;
-                    _tags.Add(tagElement);
+                    CreateTag(tag);
                 }
             }
 
@@ -366,7 +394,7 @@ namespace LazyBuilder
 
         #region Button Clicks
 
-        private async void LoadNewServer()
+        private async void LoadServer()
         {
             if (!Directory.Exists(_serverPath.value))
             {
@@ -440,6 +468,64 @@ namespace LazyBuilder
             ItemSelected(selectedItem);
         }
 
+        private void CreateTag(string tag)
+        {
+            var tagElement = new TextField();
+            tagElement.value = tag;
+            tagElement.style.marginBottom = 2;
+
+            tagElement.RegisterCallback<FocusInEvent>(x =>
+            {
+                tagInEdit = _editableTags.IndexOf(tagElement);
+                _removeTagBttn.SetEnabled(true);
+            });
+            tagElement.RegisterValueChangedCallback(x =>
+            {
+                if (!_saveTagsBttn.enabledSelf)
+                    _saveTagsBttn.SetEnabled(true);
+            });
+
+            _tags.Add(tagElement);
+            _editableTags.Add(tagElement);
+        }
+
+        private void AddTag()
+        {
+            CreateTag(NEW_TAG_MSG);
+            _saveTagsBttn.SetEnabled(true);
+        }
+
+        private void RemoveTag()
+        {
+            if (tagInEdit == -1 || _editableTags.Count <= 0 || tagInEdit > _editableTags.Count - 1) return;
+
+            _tags.Remove(_editableTags[tagInEdit]);
+
+            //Not remove at to prevent removing wrong item (in case of auto deletion) 
+            _editableTags.Remove(_editableTags[tagInEdit]);
+
+            _saveTagsBttn.SetEnabled(true);
+        }
+
+        private void SaveTags()
+        {
+            var newTagsText = _editableTags.Select(x => x.value).ToList();
+
+            if (selectedItem.Tags == newTagsText) return;
+
+            var index = cachedData.Items.TakeWhile(x => x.Id != selectedItem.Id).Count();
+
+            selectedItem.Tags = newTagsText;
+
+            cachedData.Items[index] = selectedItem;
+
+            SaveData(cachedData);
+
+            this.ShowNotification(new GUIContent("Tags saved successfully!"), 1);
+
+            LoadServer();
+        }
+
         #endregion Button Clicks
 
         #region Read Cached Folder Data
@@ -493,21 +579,27 @@ namespace LazyBuilder
 
         }
 
-        void AutoWriteData()
+        private void AutoWriteData()
         {
 
-            var filePath = $"{loadedPath.AbsoluteFormat()}\\{PathFactory.MAIN_FILE}.{PathFactory.MAIN_TYPE}";
+            SaveData(cachedData);
 
-            var rawData = JsonConvert.SerializeObject(cachedData, Formatting.Indented);
+            this.ShowNotification(new GUIContent("Data filled successfully!"), 1);
+
+            LoadServer();
+        }
+
+        private void SaveData(ServerData serverData)
+        {
+            var rawData = JsonConvert.SerializeObject(serverData, Formatting.Indented);
+
+            var filePath = $"{loadedPath.AbsoluteFormat()}\\{PathFactory.MAIN_FILE}.{PathFactory.MAIN_TYPE}";
 
             if (File.Exists(filePath))
                 File.Delete(filePath);
 
             File.WriteAllText(filePath, rawData);
 
-            SetupItems();
-
-            this.ShowNotification(new GUIContent("Data filled successfully!"), 1);
         }
 
 

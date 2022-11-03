@@ -109,10 +109,18 @@ namespace LazyBuilder
         private List<string> tempFiles;
         private const int tempArraySize = 5;
 
+        //-----Footer Area
 
         //Debug Messager
         private TextElement _debugMssg;
 
+        //Settings
+        private DropdownField _settingdDrop;
+        private VisualElement _settingsIcon;
+
+        //About
+        private DropdownField _aboutDrop;
+        private VisualElement _aboutIcon;
 
         private Vector3 initPos;
         bool setDist;
@@ -124,7 +132,11 @@ namespace LazyBuilder
         private VisualTreeAsset _itemTemplate;
 
         private Vector2 lastMousePos;
-        //private bool isLoadingPrev;
+
+        private bool isLoadingPrev;
+        private int loadingPrevFrame;
+        private const int loadingPrevFrameInterval = 20;
+
         private bool isRotatingPrev;
         private bool isTranslatingPrev;
 
@@ -136,6 +148,26 @@ namespace LazyBuilder
         const string NO_CONNECTION_MSG = "No connection to this library";
         const string NOT_FOUND_MSG = "The library URL appears to broken or incomplete";
         const string INVALID_DATA_MSG = "The library does not follow the standard structre";
+
+        const string SETTINGS_RESETPREF_MSG = "Reset Preferences";
+        const string SETTINGS_CLEARTEMP_MSG = "Delete Temp Items";
+        const string SETTINGS_CLEARSTORED_MSG = "Delete Stored Items";
+
+        const string ABOUT_TOOL_REPO_MSG = "About Lazy Builder";
+
+        const string ABOUT_LIB_REPO_MSG = "About Lazy Builder Library";
+        const string ABOUT_REPORT_MSG = "Report an error";
+        const string ABOUT_DONATE_MSG = "Donate or support the Project";
+
+        const string SETTING_RESETPREF_TITLE = "Reset Preferences";
+        const string SETTING_RESETPREF_DESC = "Are you sure you want to reset this window's preferences";
+        const string SETTING_DELETETEMP_TITLE = "Delete Temp Items";
+        const string SETTING_DELETETEMP_DESC = "Are you sure you want to delete all the fetched temporary items?";
+        const string SETTING_DELETESTORED_TITLE = "Delete Stored Items";
+        const string SETTING_DELETESTORED_DESC = "Are you sure you want to delete all the fetched built/stored items?";
+
+        const string CONFIRM_MSG = "Go Ahead";
+        const string CANCEL_MSG = "Cancel";
 
 
         #region Unity Functions
@@ -161,6 +193,7 @@ namespace LazyBuilder
             SetupPagination();
             SwitchSidePanel();
             SetupIcons();
+            SetupFooterMenuItems();
             SetupCamera();
 
             SetupServers();
@@ -191,11 +224,9 @@ namespace LazyBuilder
 
         private void OnGUI()
         {
-            //if(isTranslatingPrev || isRotatingPrev)
-            //    EditorGUIUtility.AddCursorRect(new Rect(20, 20, 140, 40), MouseCursor.Orbit);
-
-
+            PreviewLoadAnimFrame();
             RenderItemPreview();
+
         }
 
         #endregion Unity Functions
@@ -282,7 +313,20 @@ namespace LazyBuilder
             _searchBttn = (Button)_root.Q("SearchBttn");
             _searchBttnIcon = _root.Q("SearchBttnIcon");
 
+
+            //-----Footer Area
+
+            //Debug Messager
             _debugMssg = (TextElement)_root.Q("Debug");
+
+            //Settings
+            _settingdDrop = (DropdownField)_root.Q("SettingsDrop");
+            _settingsIcon = _root.Q("SettingsIcon");
+
+            //About
+            _aboutDrop = (DropdownField)_root.Q("AboutDrop");
+            _aboutIcon = _root.Q("AboutIcon");
+
         }
 
         private void SetupIcons()
@@ -292,6 +336,9 @@ namespace LazyBuilder
             _itemTypeIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("icon dropdown").image;
             _serverDropIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_icon dropdown@2x").image;
             _saveServersIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_SaveAs").image;
+            _settingsIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d__Popup@2x").image;
+            _aboutIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_console.infoicon.sml").image;
+
         }
 
         private void SetupCallbacks()
@@ -330,6 +377,10 @@ namespace LazyBuilder
             _searchBar.RegisterCallback<FocusInEvent>(OnSearchFocusIn);
             _searchBar.RegisterCallback<FocusOutEvent>(OnSearchFocusOut);
             //_searchBar.RegisterValueChangedCallback(SearchChanged);
+
+            //Footer Menu Items
+            _aboutDrop.RegisterValueChangedCallback(x => OnAboutMenuChanged(x.newValue));
+            _settingdDrop.RegisterValueChangedCallback(x => OnSettingsMenuChanged(x.newValue));
         }
 
         private async void SetupItems(List<Item> items = null)
@@ -727,6 +778,23 @@ namespace LazyBuilder
             return storedData.Items.Where(x => x.Id == itemId).FirstOrDefault();
         }
 
+        private void AddStoredItem(string file)
+        {
+            (string id, string typeId) = PathFactory.GetItemIds(file);
+
+            if (!HasStoredItem(id))
+                storedData.Items.Add(new Item() { Id = id });
+
+            var item = GetStoredItem(id);
+
+            if (item.TypeIds == null)
+                item.TypeIds = new List<string>();
+
+            //Add TypeId
+            item.TypeIds.Add(typeId);
+
+        }
+
         private void SetupStoredItems()
         {
             storedData = new ServerData();
@@ -735,21 +803,37 @@ namespace LazyBuilder
             string tmpPath = $"{PathFactory.absoluteToolPath}\\{PathFactory.STORED_ITEMS_PATH}";
 
             var files = Utils.GetFiles(tmpPath, true);
+
             foreach (var file in files)
+                AddStoredItem(file);
+        }
+
+        private void RemoveStoredItem(string file)
+        {
+            var filePath = $"{PathFactory.absoluteToolPath}\\{PathFactory.STORED_ITEMS_PATH}\\{file}";
+            filePath = filePath.AbsoluteFormat();
+
+            if (File.Exists(filePath))
             {
-                //Format: Id_TypeId.fbx
-                var fileSplit = file.Split('_');
+                File.Delete(filePath);
+                File.Delete(filePath + ".meta");
+            }
 
-                if (!HasStoredItem(fileSplit[0]))
-                    storedData.Items.Add(new Item() { Id = fileSplit[0] });
+            var item = storedData.Items.FirstOrDefault(x => file.StartsWith(x.Id));
 
-                var item = GetStoredItem(fileSplit[0]);
+            if (item != null)
+                storedData.Items.Remove(item);
 
-                if (item.TypeIds == null)
-                    item.TypeIds = new List<string>();
+        }
 
-                //Add TypeId
-                item.TypeIds.Add(fileSplit[1].Substring(0, fileSplit[1].IndexOf('.')));
+        private void RemoveAllStoredItems()
+        {
+            var numStoredItems = storedData.Items.Count;
+            for (int i = 0; i < numStoredItems; i++)
+            {
+                var numTypeIds = storedData.Items[0].TypeIds.Count;
+                for (int j = 0; j < numTypeIds; j++)
+                    RemoveStoredItem(PathFactory.BuildItemFile(storedData.Items[0].Id, storedData.Items[0].TypeIds[0]));
             }
         }
 
@@ -773,26 +857,26 @@ namespace LazyBuilder
                 tempFiles.Add(allFiles[i]);
         }
 
-        private bool HasTempFile(string id)
+        private bool HasTempFile(string file)
         {
-            bool hasFile = tempFiles.Contains(id);
+            bool hasFile = tempFiles.Contains(file);
             //int index = hasFile ? tempItems.IndexOf(id) : -1;
 
             return hasFile;
         }
 
-        private void AddTempFile(string id)
+        private void AddTempFile(string file)
         {
             // If exceeds the buffer limit - delete the 1st element
             if (tempFiles.Count >= tempArraySize)
                 RemoveTempFile(tempFiles[0]);
 
-            tempFiles.Add(id);
+            tempFiles.Add(file);
         }
 
-        private void RemoveTempFile(string id)
+        private void RemoveTempFile(string file)
         {
-            var filePath = $"{PathFactory.absoluteToolPath}\\{PathFactory.TEMP_ITEMS_PATH}\\{id}";
+            var filePath = $"{PathFactory.absoluteToolPath}\\{PathFactory.TEMP_ITEMS_PATH}\\{file}";
             filePath = filePath.AbsoluteFormat();
 
             if (File.Exists(filePath))
@@ -801,19 +885,27 @@ namespace LazyBuilder
                 File.Delete(filePath + ".meta");
             }
 
-            tempFiles.Remove(id);
+            tempFiles.Remove(file);
         }
 
-        private void StoreTempFile(string id)
+        private void RemoveAllTempFiles()
+        {
+            var numTempFiles = tempFiles.Count;
+            for (int i = 0; i < numTempFiles; i++)
+                RemoveTempFile(tempFiles[0]);
+        }
+
+        private void StoreTempFile(string file)
         {
             var dir = $"{Application.dataPath}/{PathFactory.STORED_ITEMS_PATH}";
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
-            AssetDatabase.MoveAsset($"{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}/{id}",
-                $"{PathFactory.relativeToolPath}/{PathFactory.STORED_ITEMS_PATH}/{id}");
+            AssetDatabase.MoveAsset($"{PathFactory.relativeToolPath}/{PathFactory.TEMP_ITEMS_PATH}/{file}",
+                $"{PathFactory.relativeToolPath}/{PathFactory.STORED_ITEMS_PATH}/{file}");
 
-            RemoveTempFile(id);
+            AddStoredItem(file);
+            RemoveTempFile(file);
         }
 
         #endregion Temporary Items Buffer
@@ -831,54 +923,12 @@ namespace LazyBuilder
                 SetupItems();
             else
             {
-                var searchedList = FuzzySearch(items, searchVal);
+                var searchedList = SearchEngine.FuzzySearch(items, searchVal);
                 SetupItems(searchedList);
             }
         }
 
-        private List<Item> FuzzySearch(List<Item> source, string key)
-        {
-            return source.Where(x => FuzzyAllMatch(x, key) > 1).OrderByDescending(x => FuzzyIdMatch(x, key))
-                .ThenByDescending(x => FuzzyTagMatch(x, key)).ToList();
-        }
-
-        private int FuzzyAllMatch(Item source, string key)
-        {
-            int maxMatches = FuzzyStringMatch(source.Id, key);
-            return Mathf.Max(maxMatches, FuzzyTagMatch(source, key));
-        }
-
-        private int FuzzyIdMatch(Item source, string key) => FuzzyStringMatch(source.Id, key);
-
-        private int FuzzyTagMatch(Item source, string key)
-        {
-            int maxMatches = 0;
-            foreach (var tag in source.Tags)
-                maxMatches = Mathf.Max(maxMatches, FuzzyStringMatch(tag, key));
-            return maxMatches;
-        }
-
-        private int FuzzyStringMatch(string source, string key)
-        {
-            int maxMatches = 0, currentMatches = 0;
-
-            var charactersBase = source.ToCharArray();
-            var charactersKey = key.ToCharArray();
-            for (int i = 0; i < charactersBase.Length; i++)
-            {
-                if (currentMatches < charactersKey.Length &&
-                    charactersKey[currentMatches].Upper() == charactersBase[i].Upper())
-                    currentMatches++;
-                else if (currentMatches > 0)
-                {
-                    maxMatches = currentMatches > maxMatches ? currentMatches : maxMatches;
-                    currentMatches = 0;
-                }
-            }
-
-            maxMatches = currentMatches > maxMatches ? currentMatches : maxMatches;
-            return maxMatches;
-        }
+      
 
         private void OnSearchFocusIn(FocusInEvent focus)
         {
@@ -911,14 +961,30 @@ namespace LazyBuilder
 
         private async void PreviewLoadAnimFrame()
         {
+            if (!isLoadingPrev)
+            {
+                _previewLoaderText.visible = false;
+                return;
+            }
 
+            loadingPrevFrame++;
+            _previewLoaderText.visible = true;
 
-            if (_previewLoaderText.text == "..." || _previewLoaderText.text == "")
+            if ((_previewLoaderText.text == "..." || _previewLoaderText.text == "") && loadingPrevFrame > loadingPrevFrameInterval)
+            {
                 _previewLoaderText.text = ".";
-            else if (_previewLoaderText.text == ".")
+                loadingPrevFrame = 0;
+            }
+            else if (_previewLoaderText.text == "." && loadingPrevFrame > loadingPrevFrameInterval)
+            {
                 _previewLoaderText.text = "..";
-            else if (_previewLoaderText.text == "..")
+                loadingPrevFrame = 0;
+            }
+            else if (_previewLoaderText.text == ".." && loadingPrevFrame > loadingPrevFrameInterval)
+            {
                 _previewLoaderText.text = "...";
+                loadingPrevFrame = 0;
+            }
         }
 
 
@@ -1180,6 +1246,7 @@ namespace LazyBuilder
             //Update Preferences
             preferences.LastItemType = value;
             UpdatePreferences();
+            isLoadingPrev = true;
 
             //Reset Mesh Preview
             previewObj = null;
@@ -1231,7 +1298,6 @@ namespace LazyBuilder
             var objectSizes = bounds.max - bounds.min;
             var objectSize = Mathf.Max(objectSizes.x, objectSizes.y, objectSizes.z);
 
-            //isLoadingPrev = false;
 
 
             if (previewRenderUtility == null || previewRenderUtility.camera == null) return;
@@ -1243,10 +1309,11 @@ namespace LazyBuilder
             // Estimated offset from the center to the outside of the object
             distance += 0.5f * objectSize;
 
-            _generateBttn.SetEnabled(true);
 
             previewRenderUtility.camera.transform.RotateAround(previewMesh.bounds.center, Vector3.up, Time.deltaTime);
             await Task.Delay(3);
+
+            _generateBttn.SetEnabled(true);
 
             //If camera has been destroyed while waiting - return
             if (previewRenderUtility == null || previewRenderUtility.camera == null) return;
@@ -1254,7 +1321,10 @@ namespace LazyBuilder
             var targetPosition = bounds.center - distance * previewRenderUtility.camera.transform.forward;
             previewRenderUtility.camera.transform.position = targetPosition;
 
-            //Debug.Log($"Max bounds {maxSize}");
+
+            //Slight delay to show loading status
+            await Task.Delay(100);
+            isLoadingPrev = false;
         }
 
 
@@ -1301,6 +1371,7 @@ namespace LazyBuilder
                 {
                     var server = ServerManager.CreateServer(preferences.Servers_Type[i], preferences.Servers_src[i],
                         preferences.Servers_branch[i]);
+
                     serverList.Add(preferences.Servers_Id[i], server);
                 }
             }
@@ -1471,6 +1542,88 @@ namespace LazyBuilder
 
         #endregion Manage Servers
 
+        #region Footer Menu Items
+
+        private void SetupFooterMenuItems()
+        {
+
+            //About
+            List<string> footerAboutMenuItems = new List<string>();
+            footerAboutMenuItems.Add(ABOUT_TOOL_REPO_MSG);
+            footerAboutMenuItems.Add(ABOUT_LIB_REPO_MSG);
+            footerAboutMenuItems.Add(ABOUT_REPORT_MSG);
+            footerAboutMenuItems.Add(ABOUT_DONATE_MSG);
+            _aboutDrop.choices = footerAboutMenuItems;
+
+
+            //Settings
+            List<string> footerSettingsMenuItems = new List<string>();
+            footerSettingsMenuItems.Add(SETTINGS_RESETPREF_MSG);
+            footerSettingsMenuItems.Add(SETTINGS_CLEARTEMP_MSG);
+            footerSettingsMenuItems.Add(SETTINGS_CLEARSTORED_MSG);
+            _settingdDrop.choices = footerSettingsMenuItems;
+
+
+        }
+        private void OnAboutMenuChanged(string option)
+        {
+            if (option == "") return;
+
+            switch (option)
+            {
+                case ABOUT_TOOL_REPO_MSG:
+                    Application.OpenURL("https://github.com/wafflesgama/LazyBuilder");
+                    break;
+
+                case ABOUT_LIB_REPO_MSG:
+                    Application.OpenURL("https://github.com/wafflesgama/LazyBuilderLibrary");
+                    break;
+
+                case ABOUT_REPORT_MSG:
+                    Application.OpenURL("https://github.com/wafflesgama/LazyBuilder/issues");
+                    break;
+
+                case ABOUT_DONATE_MSG:
+                    Application.OpenURL("https://www.buymeacoffee.com/guilhermeGama");
+                    break;
+            }
+
+            _aboutDrop.value = "";
+
+
+        }
+        private void OnSettingsMenuChanged(string option)
+        {
+            switch (option)
+            {
+                case SETTINGS_RESETPREF_MSG:
+                    if (EditorUtility.DisplayDialog(SETTING_RESETPREF_TITLE, SETTING_RESETPREF_DESC, CONFIRM_MSG, CANCEL_MSG))
+                        ResetPreferences();
+                    break;
+
+                case SETTINGS_CLEARTEMP_MSG:
+                    if (EditorUtility.DisplayDialog(SETTING_DELETETEMP_TITLE, SETTING_DELETETEMP_DESC, CONFIRM_MSG, CANCEL_MSG))
+                    {
+                        RemoveAllTempFiles();
+                        AssetDatabase.Refresh();
+                    }
+                    break;
+
+                case SETTINGS_CLEARSTORED_MSG:
+                    if (EditorUtility.DisplayDialog(SETTING_DELETESTORED_TITLE, SETTING_DELETESTORED_DESC, CONFIRM_MSG, CANCEL_MSG))
+                    {
+                        RemoveAllStoredItems();
+                        AssetDatabase.Refresh();
+                    }
+                    break;
+            }
+
+            _settingdDrop.value = "";
+        }
+
+
+        #endregion Footer Menu Items
+
         #region Preferences
 
         private void InitPreferences()
@@ -1485,6 +1638,12 @@ namespace LazyBuilder
         private void UpdatePreferences()
         {
             PreferenceManager.SavePreference(PathFactory.BUILDER_PREFS_FILE, preferences);
+        }
+
+        private void ResetPreferences()
+        {
+            preferences.SetDefaultValues();
+            UpdatePreferences();
         }
 
         #endregion Preferences

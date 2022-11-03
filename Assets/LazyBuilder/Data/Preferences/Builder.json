@@ -1,26 +1,22 @@
 {
-  "LastServer": "MainLocal",
-  "LastItem": "BreadLoaf",
-  "LastItemType": "Half",
+  "LastServer": "MainLoc",
+  "LastItem": "CheeseWheel",
+  "LastItemType": "Cutted",
   "ServersType": [
     0,
-    1,
-    0
+    1
   ],
   "ServersId": [
     "Main",
-    "MainLocal",
-    "www"
+    "MainLoc"
   ],
   "ServersSrc": [
     "wafflesgama/LazyBuilderLibrary",
-    "C:\\Projects\\LazyBuilder\\LazyBuilderData",
-    "wafflesgama/LazyBuilderLibraryaa"
+    "C:\\Projects\\LazyBuilder\\LazyBuilderData"
   ],
   "ServersBranch": [
     "main",
-    null,
-    ""
+    null
   ],
   "PropCol": false,
   "PropRb": false,

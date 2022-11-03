@@ -32,8 +32,6 @@ namespace LazyBuilder
             var window = GetWindow<BuilderWindow>();
             window.titleContent = new GUIContent("Lazy Builder");
             window.Show();
-
-
         }
 
 

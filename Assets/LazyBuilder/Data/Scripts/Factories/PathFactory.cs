@@ -32,7 +32,7 @@ namespace LazyBuilder
 
         public const string UI_PATH = "Data/UI";
         public const string MESHES_PATH = "Data/Meshes";
-        
+
         public const string MATERIALS_PATH = "Data/Materials";
         public const string MATERIALS_GROUND_FILE = "Lazy_Preview_Mat";
 
@@ -49,7 +49,7 @@ namespace LazyBuilder
         public const string MESH_TYPE = "fbx";
         public const string MATERIAL_TYPE = "mat";
 
-        
+
         public const string MARKDOWN_FILE = "AssetList";
 
 
@@ -93,7 +93,7 @@ namespace LazyBuilder
 
             if (absolute)
                 path = path.AbsoluteFormat();
-            
+
 
             return path;
         }
@@ -113,6 +113,24 @@ namespace LazyBuilder
             return path;
         }
 
+        public static string BuildItemFile(string itemId, string itemTypeId)
+        {
+            return $"{itemId}_{itemTypeId}.{MESH_TYPE}";
+        }
+
+        /// <summary>
+        /// Gets Item Id & Item Type Id from the fileName structure "Id_TypeId.fbx"
+        /// </summary>
+        /// <param name="file">The standard named Item's file</param>
+        /// <returns> Returns (Id,TypeId)</returns>
+        public static (string, string) GetItemIds(string file)
+        {
+            //Format: Id_TypeId.fbx
+
+            var fileSplit = file.Split('_');
+
+            return (fileSplit[0], fileSplit[1].Substring(0, fileSplit[1].IndexOf('.')));
+        }
         #endregion Sub Paths
     }
 }

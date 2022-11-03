@@ -108,7 +108,6 @@ namespace LazyBuilder
             return response;
         }
 
-
         public async Task<ServerResponse<Texture2D>> GetImage(string subPath, string saveFilePath, string imgName)
         {
             ServerResponse<Texture2D> response = new ServerResponse<Texture2D>();
@@ -177,7 +176,7 @@ namespace LazyBuilder
             return gitRepo;
         }
 
-        public string GetBranch()
+        public string GetBranch()   
         {
             return gitBranch;
         }

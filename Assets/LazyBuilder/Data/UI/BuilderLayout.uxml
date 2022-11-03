@@ -37,7 +37,7 @@
                     </ui:VisualElement>
                     <ui:VisualElement name="Main" style="flex-grow: 1; flex-shrink: 0; width: 100%;">
                         <ui:VisualElement name="MainGrid" style="height: 90%; flex-grow: 1; flex-shrink: 0; background-color: rgba(0, 0, 0, 0.24); display: flex; overflow: hidden;">
-                            <ui:ScrollView name="MainPage" mode="Vertical" show-horizontal-scroller="true" horizontal-scroller-visibility="Hidden" style="background-color: rgba(0, 0, 0, 0); flex-grow: 1; width: auto; flex-direction: column; flex-wrap: wrap; flex-shrink: 0; align-items: flex-start; height: auto; display: flex;">
+                            <ui:ScrollView name="MainPage" mode="Vertical" show-horizontal-scroller="true" horizontal-scroller-visibility="Hidden" elasticity="0.12" style="background-color: rgba(0, 0, 0, 0); flex-grow: 1; width: auto; flex-direction: column; flex-wrap: wrap; flex-shrink: 0; align-items: flex-start; height: auto; display: flex;">
                                 <ui:GroupBox name="ItemsColumn1" style="flex-direction: row; width: 100%; max-width: none; flex-wrap: wrap; overflow: visible; flex-shrink: 0; align-items: flex-start;" />
                             </ui:ScrollView>
                             <ui:VisualElement name="ErrorPage" style="flex-grow: 1; flex-shrink: 0; justify-content: center; align-items: center; overflow: hidden; display: none;">
@@ -50,12 +50,13 @@
                                 </ui:VisualElement>
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement name="MainFooter" style="height: 19px; flex-direction: row; flex-grow: 0; flex-shrink: 0; margin-bottom: 0;">
+                        <ui:VisualElement name="MainFooter" style="height: 23px; flex-direction: row; flex-grow: 0; flex-shrink: 0; margin-bottom: 0; padding-left: 5px; padding-right: 5px; padding-top: 2px; padding-bottom: 2px;">
                             <ui:Button text="&lt;" display-tooltip-when-elided="true" name="PrevPageBttn" style="font-size: 9px; margin-right: 0;" />
                             <ui:Button text="&gt;" display-tooltip-when-elided="true" name="NextPageBttn" style="-unity-font-style: normal; font-size: 9px; margin-left: 0;" />
                             <ui:Label text="1-20 of 69 Results" display-tooltip-when-elided="true" name="PageIndexMssg" style="font-size: 8px; -unity-text-align: middle-left;" />
                             <ui:VisualElement name="Spacer" style="flex-grow: 1;" />
-                            <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="PageSizeDropdown" />
+                            <ui:Label text="Page Size: " display-tooltip-when-elided="true" style="font-size: 8px; -unity-text-align: middle-left;" />
+                            <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="PageSizeDropdown" style="font-size: 8px; -unity-text-align: middle-left;" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -65,7 +66,7 @@
                     <ui:VisualElement name="Space" style="height: 81px; background-color: rgb(54, 54, 54); flex-basis: 0; min-height: 81px;" />
                     <ui:ScrollView name="ScrollView" horizontal-scroller-visibility="Hidden" vertical-page-size="-1" touch-scroll-type="Clamped" vertical-scroller-visibility="Auto" style="flex-grow: 1; flex-shrink: 1; align-items: flex-start; background-color: rgba(51, 51, 51, 0); min-width: auto; flex-basis: auto; margin-top: 0; padding-right: 0; padding-left: 0;">
                         <ui:VisualElement name="ItemThumbnailContainer" style="width: auto; height: auto; background-image: none; -unity-text-align: upper-left; align-items: center; margin-bottom: 0; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); padding-left: 2px; padding-right: 2px; padding-top: 2px; padding-bottom: 0; flex-direction: row; justify-content: center; background-color: rgba(46, 46, 46, 0); -unity-background-image-tint-color: rgba(255, 255, 255, 0); border-top-width: 0; border-left-width: 0; border-right-width: 0; border-bottom-width: 0; opacity: 1;">
-                            <ui:Label display-tooltip-when-elided="true" name="PreviewLoaderT" text="..." style="font-size: 20px; -unity-font-style: bold; position: absolute; -unity-text-align: middle-center; display: none;" />
+                            <ui:Label display-tooltip-when-elided="true" name="PreviewLoaderT" text="..." style="font-size: 20px; -unity-font-style: bold; position: absolute; -unity-text-align: middle-center; display: flex;" />
                             <ui:VisualElement name="ItemThumbnail" style="width: 100%; height: 128px; background-image: none; -unity-text-align: upper-left; align-items: center; border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; display: flex; -unity-background-image-tint-color: rgb(255, 255, 255); opacity: 1; visibility: hidden; padding-bottom: 0; padding-left: 0; padding-right: 0; padding-top: 0; background-color: rgb(42, 42, 42); justify-content: center; margin-bottom: 20px; margin-top: -20px; border-top-width: 0; border-left-color: rgba(115, 115, 115, 0.18); border-right-color: rgba(115, 115, 115, 0.18); border-top-color: rgba(115, 115, 115, 0.18); border-bottom-color: rgba(115, 115, 115, 0.18);" />
                             <ui:VisualElement name="VisualElement" style="justify-content: center; margin-top: 23px; display: none;">
                                 <ui:Button text="+" display-tooltip-when-elided="true" name="ZoomIn" style="width: 21px; margin-bottom: 24px; -unity-background-scale-mode: scale-to-fit;" />
@@ -125,8 +126,15 @@
         </ui:VisualElement>
         <ui:VisualElement name="FooterBar" style="flex-direction: row; background-color: rgb(60, 60, 60); height: 17px; padding-left: 5px;">
             <ui:Label display-tooltip-when-elided="true" name="Debug" style="opacity: 0.76; font-size: 9px; -unity-text-align: middle-left; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0;" />
-            <ui:VisualElement style="flex-grow: 1; flex-shrink: 10;" />
-            <ui:Button text="S" display-tooltip-when-elided="true" style="white-space: nowrap; align-items: flex-end; max-width: 12px; background-image: url(&apos;project://database/Assets/TutorialInfo/Icons/Help_Icon.png?fileID=2800000&amp;guid=34f556d724b1bbf4097ca6220db2c581&amp;type=3#Help_Icon&apos;); background-color: rgb(255, 255, 255); display: none;" />
+            <ui:VisualElement name="Spacer" style="flex-grow: 1; flex-shrink: 10;" />
+            <ui:VisualElement name="About" style="flex-direction: row; align-items: center; margin-right: 5px;">
+                <ui:VisualElement name="AboutIcon" style="width: 17px; height: 14px; justify-content: flex-start; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 0; padding-right: 0; -unity-background-scale-mode: scale-to-fit; opacity: 0.61;" />
+                <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="AboutDrop" tooltip="About" style="position: absolute; width: 100%; display: flex; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; opacity: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 5px; padding-right: 5px;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Settings" style="flex-direction: row; align-items: center; margin-right: 5px;">
+                <ui:VisualElement name="SettingsIcon" style="width: 17px; height: 100%; justify-content: flex-start; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 0; padding-right: 0;" />
+                <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="SettingsDrop" tooltip="Settings" style="position: absolute; width: 100%; display: flex; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; opacity: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 5px; padding-right: 5px;" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
