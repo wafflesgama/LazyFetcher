@@ -28,6 +28,7 @@ namespace LazyBuilder
         [MenuItem("Tools/Lazy Builder/Build #b")]
         private static void BuildWindow()
         {
+            if (Application.isPlaying) return;
             GetSceneWindow();
             var window = GetWindow<BuilderWindow>();
             window.titleContent = new GUIContent("Lazy Builder");
@@ -36,12 +37,14 @@ namespace LazyBuilder
 
 
 
-        [MenuItem("Tools/Lazy Builder/Lazy Data Manager #r")]
+        [MenuItem("Tools/Lazy Builder/Server Manager #m")]
         private static void ManageWindow()
         {
+            if (Application.isPlaying) return;
+
             GetSceneWindow();
             var window = GetWindow<ManageWindow>();
-            window.titleContent = new GUIContent("Lazy Data Manager");
+            window.titleContent = new GUIContent("Lazy Server Manager");
             window.Show();
         }
 

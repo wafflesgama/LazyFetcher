@@ -24,7 +24,7 @@ namespace LazyBuilder
 
         private int currentPageIndex;
 
-        private string selectedItem;
+        private string selectedItemId;
         private string selectedFile;
 
         private bool onlyLocalSearch;
@@ -74,6 +74,10 @@ namespace LazyBuilder
 
         private Button _searchBttn;
 
+        private Button _randomSortBttn;
+        private Button _alphaSortBttn;
+        private Button _similarSortBttn;
+
 
         //Generation Props
         private TextField _propName;
@@ -82,6 +86,11 @@ namespace LazyBuilder
 
         private VisualElement _grid;
         private VisualElement _searchBttnIcon;
+
+        private VisualElement _randomSortBttnIcon;
+        private VisualElement _alphaSortBttnIcon;
+        private VisualElement _similarSortBttnIcon;
+
         private VisualElement _generateBttnIcon;
 
         private Button _generateBttn;
@@ -169,6 +178,7 @@ namespace LazyBuilder
         const string CONFIRM_MSG = "Go Ahead";
         const string CANCEL_MSG = "Cancel";
 
+        int setup_ProcessId;
 
         #region Unity Functions
 
@@ -186,6 +196,7 @@ namespace LazyBuilder
             SetupBindings();
 
             _generateBttn.SetEnabled(false);
+            _similarSortBttn.SetEnabled(false);
 
             SetupCallbacks();
             SetupInputCallbacks();
@@ -235,6 +246,8 @@ namespace LazyBuilder
         private void InitVariables()
         {
             initPos = Vector3.zero;
+            setup_ProcessId = 0;
+
             defaultButtonColor = new Color(0.345098f, 0.345098f, 0.345098f, 1);
             activeButtonColor = new Color(0.27f, 0.38f, 0.49f);
 
@@ -313,6 +326,13 @@ namespace LazyBuilder
             _searchBttn = (Button)_root.Q("SearchBttn");
             _searchBttnIcon = _root.Q("SearchBttnIcon");
 
+            _randomSortBttn = (Button)_root.Q("RandomSortBttn");
+            _randomSortBttnIcon = _root.Q("RandomSortBttnIcon");
+            _alphaSortBttn = (Button)_root.Q("AlphaSortBttn");
+            _alphaSortBttnIcon = _root.Q("AlphaSortBttnIcon");
+            _similarSortBttn = (Button)_root.Q("SimilarSortBttn");
+            _similarSortBttnIcon = _root.Q("SimilarSortBttnIcon");
+
 
             //-----Footer Area
 
@@ -332,6 +352,11 @@ namespace LazyBuilder
         private void SetupIcons()
         {
             _searchBttnIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_Search Icon").image;
+
+            _randomSortBttnIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_UnityEditor.Graphs.AnimatorControllerTool").image;
+            _similarSortBttnIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_FilterByLabel").image;
+            _alphaSortBttnIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("AlphabeticalSorting").image;
+
             _generateBttnIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("GameObject Icon").image;
             _itemTypeIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("icon dropdown").image;
             _serverDropIcon.style.backgroundImage = (Texture2D)EditorGUIUtility.IconContent("d_icon dropdown@2x").image;
@@ -376,20 +401,34 @@ namespace LazyBuilder
             _searchBttn.clicked += Search;
             _searchBar.RegisterCallback<FocusInEvent>(OnSearchFocusIn);
             _searchBar.RegisterCallback<FocusOutEvent>(OnSearchFocusOut);
-            //_searchBar.RegisterValueChangedCallback(SearchChanged);
+            _randomSortBttn.clicked += SortItems_Random;
+            _alphaSortBttn.clicked += SortItems_Alpha;
+            _similarSortBttn.clicked += SortItems_Similar;
+
 
             //Footer Menu Items
             _aboutDrop.RegisterValueChangedCallback(x => OnAboutMenuChanged(x.newValue));
             _settingdDrop.RegisterValueChangedCallback(x => OnSettingsMenuChanged(x.newValue));
+
+            //Animations
+            SetupElementHoverAnim(_randomSortBttn);
+            SetupElementHoverAnim(_searchBttn);
+            SetupElementHoverAnim(_alphaSortBttn);
+            SetupElementHoverAnim(_generateBttn);
+            SetupElementHoverAnim(_serversDropContainer);
         }
 
         private async void SetupItems(List<Item> items = null)
         {
+            setup_ProcessId++;
+            int currentProcessId = setup_ProcessId;
+
             string initServerId = ServerManager.GetServerPath();
             _grid.Clear();
 
             if (items == null)
                 items = GetItemList();
+
 
             //Pagination
             currentItems = items;
@@ -403,6 +442,8 @@ namespace LazyBuilder
                 //If server changed mid Seup - stop setting up
                 if (initServerId != ServerManager.GetServerPath()) return;
 
+                if (setup_ProcessId != currentProcessId) return;
+
                 if (_itemTemplate == null)
                     _itemTemplate = (VisualTreeAsset)AssetDatabase.LoadAssetAtPath(
                         PathFactory.BuildUiFilePath(PathFactory.BUILDER_ITEM_LAYOUT_FILE), typeof(VisualTreeAsset));
@@ -415,7 +456,9 @@ namespace LazyBuilder
 
             RefreshPageButtonsState();
             RefreshPageIndexMessage();
-            SelectDefaultItem();
+
+            if (items == null)
+                SelectDefaultItem();
         }
 
         private async void SetupItem(VisualElement element, string name, int index, string path)
@@ -699,7 +742,13 @@ namespace LazyBuilder
 
         #region Items Info
 
-        private List<Item> GetItemList() => onlyLocalSearch ? storedData.Items : ServerManager.data.Items;
+        private List<Item> GetItemList()
+        {
+            if (onlyLocalSearch)
+                return storedData.Items;
+
+            return ServerManager.data.Items;
+        }
 
         private async Task<string> GetItem(string itemId, string itemTypeId)
         {
@@ -724,7 +773,7 @@ namespace LazyBuilder
                     LogMessage("Fetching item name" + filename);
 
                     //Fetch File from server and add to Temp list
-                    await ServerManager.GetRawFile(PathFactory.BuildItemPath(selectedItem),
+                    await ServerManager.GetRawFile(PathFactory.BuildItemPath(selectedItemId),
                         PathFactory.TEMP_ITEMS_PATH, filename, PathFactory.MESH_TYPE);
                     AssetDatabase.Refresh();
                     AddTempFile(selectedFile);
@@ -910,6 +959,58 @@ namespace LazyBuilder
 
         #endregion Temporary Items Buffer
 
+
+        #region Items Sort
+
+        private void SortItems_Random()
+        {
+            List<Item> items = GetItemList();
+            System.Random rng = new System.Random(Utils.GetRandomSeed());
+            items = items.OrderBy(a => rng.Next()).ToList();
+            SetupItems(items);
+        }
+
+
+        private void SortItems_Alpha()
+        {
+            List<Item> items = GetItemList();
+            items = items.OrderBy(a => a.Id).ToList();
+            SetupItems(items);
+        }
+
+        private void SortItems_Similar()
+        {
+            //If no selected Item - Cancel sort
+            if (selectedItemId == null) return;
+
+            List<Item> items = GetItemList();
+
+            var selectedItem = items.FirstOrDefault(x => x.Id == selectedItemId);
+
+            //If no selected Item in List - Cancel sort
+            if (selectedItem == null) return;
+
+            //Combine all tags in one string to fit the Search Engine params (ex. tag1 tag2 tag3)
+            string combinedTags = "";
+            foreach (var tag in selectedItem.Tags)
+            {
+                combinedTags += $"{tag} ";
+            }
+
+            //If no tags - Cancel sort
+            if (combinedTags.Length <= 0) return;
+
+            //Remove last space char
+            combinedTags = combinedTags.Remove(combinedTags.Length - 1);
+
+            items = items.OrderByDescending(x => SearchEngine.WordMatch_Tag(x, combinedTags)).ToList();
+            SetupItems(items);
+        }
+
+
+        #endregion Items Sort
+
+
         #region Items Search
 
         private void Search()
@@ -928,7 +1029,7 @@ namespace LazyBuilder
             }
         }
 
-      
+
 
         private void OnSearchFocusIn(FocusInEvent focus)
         {
@@ -947,6 +1048,21 @@ namespace LazyBuilder
         #endregion Items Search
 
         #region Animation
+
+        private void SetupElementHoverAnim(VisualElement button)
+        {
+            button.RegisterCallback<MouseOverEvent>(x => OnButtonHover(button));
+            button.RegisterCallback<MouseOutEvent>(x => OnButtonHoverExit(button));
+        }
+        private void OnButtonHover(VisualElement element)
+        {
+            element.style.backgroundColor = activeButtonColor;
+        }
+
+        private void OnButtonHoverExit(VisualElement element)
+        {
+            element.style.backgroundColor = defaultButtonColor;
+        }
 
         private async void BeginItemAnimation(Button button, VisualElement shadow)
         {
@@ -1021,9 +1137,9 @@ namespace LazyBuilder
 
             //Save Thumbnail of Image if not already saved
             var localPath =
-                $"{PathFactory.absoluteToolPath}\\{PathFactory.STORED_THUMB_PATH}\\{selectedItem}.{PathFactory.THUMBNAIL_TYPE}";
+                $"{PathFactory.absoluteToolPath}\\{PathFactory.STORED_THUMB_PATH}\\{selectedItemId}.{PathFactory.THUMBNAIL_TYPE}";
             if (!File.Exists(localPath))
-                await ServerManager.GetImage(PathFactory.BuildItemPath(selectedItem), localPath,
+                await ServerManager.GetImage(PathFactory.BuildItemPath(selectedItemId), localPath,
                     PathFactory.THUMBNAIL_FILE);
 
             Close();
@@ -1192,9 +1308,11 @@ namespace LazyBuilder
 
         private void ItemSelected(string itemId, Texture2D icon = null, bool manualTypeSelect = false)
         {
-            if (selectedItem == itemId) return;
+            if (selectedItemId == itemId) return;
 
             _generateBttn.SetEnabled(false);
+            _similarSortBttn.SetEnabled(true);
+
 
             List<string> choices;
             List<Item> items = GetItemList();
@@ -1202,7 +1320,7 @@ namespace LazyBuilder
 
 
             preferences.LastItem = itemId;
-            selectedItem = itemId;
+            selectedItemId = itemId;
 
             choices = items.Where(x => x.Id == itemId).FirstOrDefault().TypeIds;
 
@@ -1254,9 +1372,9 @@ namespace LazyBuilder
             previewMats = null;
 
             _itemTypeSelected.text = value;
-            _propName.value = $"{value.Capitalize()} {selectedItem.Capitalize()}";
+            _propName.value = $"{value.Capitalize()} {selectedItemId.Capitalize()}";
 
-            string objPath = await GetItem(selectedItem, value);
+            string objPath = await GetItem(selectedItemId, value);
 
             previewObj = AssetDatabase.LoadAssetAtPath(objPath, typeof(UnityEngine.Object)) as GameObject;
 

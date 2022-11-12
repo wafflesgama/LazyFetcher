@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -11,7 +12,10 @@ namespace LazyBuilder
 
     public static class Utils
     {
-
+        public static int GetRandomSeed()
+        {
+            return DateTime.UtcNow.Hour - DateTime.UtcNow.Millisecond + DateTime.UtcNow.Second;
+        }
         public static string Capitalize(this string source)
         {
             if (string.IsNullOrEmpty(source))

@@ -39,16 +39,25 @@ namespace LazyBuilder
         public static int WordMatch_Tag(Item source, string key)
         {
             int matches = 0;
+            List<string> usedWords = new List<string>();
             foreach (var tag in source.Tags)
-                matches += WordMatch(tag, key);
+                matches += WordMatch(tag, key, ref usedWords);
             return matches;
         }
 
-
         public static int WordMatch(string source, string key)
+        {
+            List<string> discard = new List<string>();
+            return WordMatch(source, key, ref discard);
+        }
+
+        public static int WordMatch(string source, string key, ref List<string> usedWord)
         {
             //Source ex: BigPineTree
             //Key ex: Forest Tree
+
+            if (usedWord == null)
+                usedWord = new List<string>();
 
             int wordMatches = 0;
 
@@ -62,8 +71,11 @@ namespace LazyBuilder
 
                 foreach (var keySplit in keySplitted)
                 {
-                    if (sourceSplit.ToUpper() == keySplit.ToUpper())
+                    if (sourceSplit.ToUpper() == keySplit.ToUpper() && !usedWord.Contains(sourceSplit.ToUpper()))
+                    {
+                        usedWord.Add(keySplit.ToUpper());
                         wordMatches++;
+                    }
                 }
             }
             return wordMatches;

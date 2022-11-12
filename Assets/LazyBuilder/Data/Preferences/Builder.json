@@ -1,7 +1,7 @@
 {
-  "LastServer": "MainLoc",
-  "LastItem": "CheeseWheel",
-  "LastItemType": "Cutted",
+  "LastServer": "Main",
+  "LastItem": "Baguette",
+  "LastItemType": "Regular",
   "ServersType": [
     0,
     1
@@ -18,7 +18,7 @@
     "main",
     null
   ],
-  "PropCol": false,
+  "PropCol": true,
   "PropRb": false,
   "PageSize": 50
 }
