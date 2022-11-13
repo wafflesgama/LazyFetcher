@@ -10,7 +10,7 @@ Since the tool by default does not contain any 3D assets its whole source occupi
 
 <br/>
 
-## Make use of the official Library 📦
+## Make use of the Main Library 📦
 The Lazy Builder comes with a main official library that has hundreds of CC0 Assets to help you build/prototype your levels ([more info](https://github.com/wafflesgama/LazyBuilderLibrary)).   
 
 ![Demo1](./ReadmeFiles/demo1.gif)
@@ -21,6 +21,11 @@ The tool supports the addition of custom libraries (local or remote) to expand t
 It has a dedicated window to help you manage & configure the library's data structure (local only).
 
 ![Demo1](./ReadmeFiles/demo2.gif)
+
+<br/>
+
+## Get you started 🛫
+Check the [Quick Start Guide](QuickGuide.md) for a brief & introductory explanation on how to use this tool.
 
 <br/>
 

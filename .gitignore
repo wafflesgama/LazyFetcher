@@ -63,3 +63,5 @@ UserSettings
 Assets/LazyBuilder/Data/Temp/Items
 Assets/LazyBuilder/Data/Thumbnails
 Assets/LazyBuilder/Data/Items
+Packages/com.unity.asset-store-tools
+Packages/packages-lock.json
