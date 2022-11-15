@@ -11,7 +11,7 @@ Since the tool by default does not contain any 3D assets its whole source occupi
 <br/>
 
 ## Make use of the Main Library 📦
-The Lazy Builder comes with a main official library that has hundreds of CC0 Assets to help you build/prototype your levels ([more info](https://github.com/wafflesgama/LazyBuilderLibrary)).   
+The Lazy Builder comes with a [Main official Library](https://github.com/wafflesgama/LazyBuilderLibrary/) that has hundreds of CC0 Assets to help you build/prototype your levels.  
 
 ![Demo1](./ReadmeFiles/demo1.gif)
 <br/>
@@ -40,22 +40,24 @@ Check the [Quick Start Guide](QuickGuide.md) for a brief & introductory explanat
 <br/>
 
 ## Installation ⤵️
-Available in the [Unity Asset Store](https://assetstore.unity.com/) or 
-Import manually the .unitypackage in the [Releases Section](https://github.com/wafflesgama/LazyBuilder/releases) 
+Currently in stage of approval for the Unity Asset Store
+<br/>
+For now you can download & import manually the ***.unitypackage** in the [Releases Section](https://github.com/wafflesgama/LazyBuilder/releases) 
 
 <br/>
 
-## Support & Contribute ☕
+## Contribute ☕
 If you found out this tool useful and/or want to help this project continue its development you can [buy me a coffee](https://www.buymeacoffee.com/guilhermeGama)!
 
 <br/>   
 
 
-## Contribute 🧑‍💻  
-If you spotted a bug, need a feature or have an awesome suggestion you can always create a github issue, fork it & merge request or simply contact me directly via e-mail or twitter. If you want to be a part of this project and contribute to it feel free to do so!
+## Support 🧑‍💻  
+If you spotted a bug, need a feature or have an awesome suggestion you can always [create a GitHub issue](https://github.com/wafflesgama/LazyBuilder/issues), fork it & merge request or simply contact me directly via e-mail. 
+If you want to be a part of this project and contribute to it feel free to do so!
 
 <br/>
 
-## Licensing
+## Licensing 📜
 The Lazy ecosystem is licensed under [GNU GPLv3](./LICENSE) which lets people do almost anything they want with it, except distributing closed source versions.<br/>
 Crediting is not required but is kindly appreciated 🤗

@@ -11,9 +11,9 @@ The built/fetched items can be found in the **“Local”** server option or sim
 
 ![Files1](./ReadmeFiles/Builder_Files.png)
 
-## Super Lightweight 🏋️
-Since the tool by default does not contain any 3D assets its whole source occupies less than 5Mb. 
 
+
+<br/>
 <br/>
 
 ## Manager Window 🔩
