@@ -2,43 +2,25 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
-using Newtonsoft.Json;
 using static LazyBuilder.ServerManager;
+using System;
 
 namespace LazyBuilder
 {
+    [Serializable]
     public class BuilderPreferences
     {
 
-        [JsonProperty("LastServer")]
-        public string LastServer { get; set; }
-
-        [JsonProperty("LastItem")]
-        public string LastItem { get; set; }
-
-        [JsonProperty("LastItemType")]
-        public string LastItemType { get; set; }
-
-        [JsonProperty("ServersType")]
-        public List<ServerType> Servers_Type { get; set; }
-
-        [JsonProperty("ServersId")]
-        public List<string> Servers_Id { get; set; }
-
-        [JsonProperty("ServersSrc")]
-        public List<string> Servers_src { get; set; }
-
-        [JsonProperty("ServersBranch")]
-        public List<string> Servers_branch { get; set; }
-
-        [JsonProperty("PropCol")]
-        public bool Prop_Col { get; set; }
-
-        [JsonProperty("PropRb")]
-        public bool Prop_Rb { get; set; }
-
-        [JsonProperty("PageSize")]
-        public int PageSize { get; set; }
+        public string LastServer;
+        public string LastItem;
+        public string LastItemType;
+        public List<ServerType> Servers_Type;
+        public List<string> ServersId;
+        public List<string> ServersSrc;
+        public List<string> ServersBranch;
+        public bool PropCol;
+        public bool PropRb;
+        public int PageSize;
 
         public void SetDefaultValues()
         {
@@ -46,26 +28,26 @@ namespace LazyBuilder
             LastItem = "";
             LastItemType = "";
 
-            Servers_Id = new List<string>();
-            Servers_Id.Add("Main");
+            ServersId = new List<string>();
+            ServersId.Add("Main");
             Servers_Type = new List<ServerType>();
             Servers_Type.Add(ServerType.GIT);
-            Servers_src = new List<string>();
-            Servers_src.Add(Server_Git.defaultRepo);
-            Servers_branch = new List<string>();
-            Servers_branch.Add(Server_Git.defaultBranch);
+            ServersSrc = new List<string>();
+            ServersSrc.Add(Server_Git.defaultRepo);
+            ServersBranch = new List<string>();
+            ServersBranch.Add(Server_Git.defaultBranch);
 
-            Prop_Col = false;
-            Prop_Rb = false;
+            PropCol = false;
+            PropRb = false;
 
             PageSize = 50;
         }
     }
 
+    [Serializable]
     public class ManagerPreferences
     {
-        [JsonProperty("LastServer")]
-        public string LastServerSrc { get; set; }
+        public string LastServer;
     }
 
     //public class Test
@@ -89,13 +71,13 @@ namespace LazyBuilder
 
             var data = File.ReadAllText(filePath);
 
-            return JsonConvert.DeserializeObject<T>(data);
+            return JsonUtility.FromJson<T>(data);
         }
 
         public static void SavePreference(string fileName, object pref)
         {
             // Convert class data to a JSON string with pretty print
-            var json = JsonConvert.SerializeObject(pref, Formatting.Indented);
+            var json = JsonUtility.ToJson(pref, prettyPrint:true);
 
             // Write that JSON string to the specified file.
             var filePath = $"{PathFactory.absoluteToolPath}\\{PathFactory.PREFS_PATH.AbsoluteFormat()}\\{fileName}.json";

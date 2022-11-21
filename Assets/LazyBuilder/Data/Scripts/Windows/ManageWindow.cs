@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -86,10 +85,10 @@ namespace LazyBuilder
             SetupCallbacks();
             SetupInputCallbacks();
 
-            if (preferences.LastServerSrc != null)
+            if (preferences.LastServer != null)
             {
 
-                ServerManager.SetServer(ServerManager.CreateServer(ServerManager.ServerType.LOCAL, preferences.LastServerSrc, null));
+                ServerManager.SetServer(ServerManager.CreateServer(ServerManager.ServerType.LOCAL, preferences.LastServer, null));
                 await ServerManager.FetchServerData();
 
                 loadedPath = ServerManager.GetServerPath();
@@ -417,7 +416,7 @@ namespace LazyBuilder
             SetupItems();
 
 
-            preferences.LastServerSrc = loadedPath;
+            preferences.LastServer = loadedPath;
             UpdatePreferences();
         }
         private void OpenFolder()
@@ -591,7 +590,7 @@ namespace LazyBuilder
 
         private void SaveData(ServerData serverData)
         {
-            var rawData = JsonConvert.SerializeObject(serverData, Formatting.Indented);
+            var rawData = JsonUtility.ToJson(serverData, prettyPrint: true);
 
             var filePath = $"{loadedPath.AbsoluteFormat()}\\{PathFactory.MAIN_FILE}.{PathFactory.MAIN_TYPE}";
 

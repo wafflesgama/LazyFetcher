@@ -1,20 +1,20 @@
 {
-  "LastServer": "",
-  "LastItem": "",
-  "LastItemType": "",
-  "ServersType": [
-    0
-  ],
-  "ServersId": [
-    "Main"
-  ],
-  "ServersSrc": [
-    "wafflesgama/LazyBuilderLibrary"
-  ],
-  "ServersBranch": [
-    "main"
-  ],
-  "PropCol": false,
-  "PropRb": false,
-  "PageSize": 50
+    "LastServer": "Main",
+    "LastItem": "",
+    "LastItemType": "",
+    "Servers_Type": [
+        0
+    ],
+    "ServersId": [
+        "Main"
+    ],
+    "ServersSrc": [
+        "wafflesgama/LazyBuilderLibrary"
+    ],
+    "ServersBranch": [
+        "main"
+    ],
+    "PropCol": false,
+    "PropRb": false,
+    "PageSize": 50
 }

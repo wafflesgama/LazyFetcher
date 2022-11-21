@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -55,7 +54,7 @@ namespace LazyBuilder
             }
             try
             {
-                data = JsonConvert.DeserializeObject<ServerData>(response.Data);
+                data = JsonUtility.FromJson<ServerData>(response.Data);
 
                 if (data.Items == null)
                     throw new Exception();

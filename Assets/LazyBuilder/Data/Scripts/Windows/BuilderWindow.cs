@@ -389,8 +389,8 @@ namespace LazyBuilder
             _nextPageBttn.clicked += () => ChangePage(true);
             _pageSizeDropdown.RegisterValueChangedCallback(x => ChangePageSize(x.newValue));
             //Generation Props
-            _propCol.RegisterValueChangedCallback(x => preferences.Prop_Col = x.newValue);
-            _propRb.RegisterValueChangedCallback(x => preferences.Prop_Rb = x.newValue);
+            _propCol.RegisterValueChangedCallback(x => preferences.PropCol = x.newValue);
+            _propRb.RegisterValueChangedCallback(x => preferences.PropRb = x.newValue);
 
             //Generation
             _generateBttn.clicked += Generate;
@@ -526,8 +526,13 @@ namespace LazyBuilder
             }
 
             groundMesh = groundObj.GetComponent<MeshFilter>().sharedMesh;
+
             groundMat = AssetDatabase.LoadAssetAtPath<Material>(
                 PathFactory.BuildMaterialFilePath(PathFactory.MATERIALS_GROUND_FILE));
+
+            var defaultShader = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset.defaultShader;
+            if (groundMat.shader != defaultShader)
+                groundMat.shader = defaultShader;
         }
 
         private void SetupCamera()
@@ -1328,8 +1333,8 @@ namespace LazyBuilder
             _mainImg.style.backgroundImage = icon;
             _mainTitle.text = itemId.Capitalize().SeparateCase();
 
-            _propRb.value = preferences.Prop_Rb;
-            _propCol.value = preferences.Prop_Col;
+            _propRb.value = preferences.PropRb;
+            _propCol.value = preferences.PropCol;
 
 
 
@@ -1482,15 +1487,15 @@ namespace LazyBuilder
             serverList.Add(LOCALPOOL_MSG, null);
 
             //If Server preferences are not empty
-            if (preferences.Servers_src != null && preferences.Servers_Id != null)
+            if (preferences.ServersSrc != null && preferences.ServersId != null)
             {
                 //Load Servers from preferences
-                for (int i = 0; i < preferences.Servers_Id.Count; i++)
+                for (int i = 0; i < preferences.ServersId.Count; i++)
                 {
-                    var server = ServerManager.CreateServer(preferences.Servers_Type[i], preferences.Servers_src[i],
-                        preferences.Servers_branch[i]);
+                    var server = ServerManager.CreateServer(preferences.Servers_Type[i], preferences.ServersSrc[i],
+                        preferences.ServersBranch[i]);
 
-                    serverList.Add(preferences.Servers_Id[i], server);
+                    serverList.Add(preferences.ServersId[i], server);
                 }
             }
             else
@@ -1500,10 +1505,10 @@ namespace LazyBuilder
                     ServerManager.CreateServer(ServerType.GIT, Server_Git.defaultRepo, Server_Git.defaultBranch);
 
                 //Add preferences entry
-                preferences.Servers_Id = new List<string>() { MAINPOOL_MSG };
+                preferences.ServersId = new List<string>() { MAINPOOL_MSG };
                 preferences.Servers_Type = new List<ServerType>() { ServerType.GIT };
-                preferences.Servers_src = new List<string> { Server_Git.defaultRepo };
-                preferences.Servers_branch = new List<string> { Server_Git.defaultBranch };
+                preferences.ServersSrc = new List<string> { Server_Git.defaultRepo };
+                preferences.ServersBranch = new List<string> { Server_Git.defaultBranch };
 
                 //Add server
                 serverList.Add(MAINPOOL_MSG, server);
@@ -1552,25 +1557,25 @@ namespace LazyBuilder
 
 
                 //If the element with the same Id 
-                if (preferences.Servers_Id.Contains(idField.value))
+                if (preferences.ServersId.Contains(idField.value))
                 {
-                    var sameId = preferences.Servers_Id.IndexOf(idField.value);
+                    var sameId = preferences.ServersId.IndexOf(idField.value);
 
                     //And with same Src - do not add to the list
-                    if (preferences.Servers_src[sameId] == srcField.value)
+                    if (preferences.ServersSrc[sameId] == srcField.value)
                         continue;
 
                     //In case not change Src for the item Id
-                    preferences.Servers_src[sameId] = srcField.value;
+                    preferences.ServersSrc[sameId] = srcField.value;
                     continue;
                 }
 
-                preferences.Servers_Id.Add(idField.value);
-                preferences.Servers_src.Add(srcField.value);
+                preferences.ServersId.Add(idField.value);
+                preferences.ServersSrc.Add(srcField.value);
                 preferences.Servers_Type.Add(Enum.Parse<ServerType>(typeField.value));
 
                 //If Server is Type GIT - Add branch
-                preferences.Servers_branch.Add(
+                preferences.ServersBranch.Add(
                     typeField.value == ServerType.GIT.ToString() ? branchField.value : null
                 );
             }
@@ -1635,6 +1640,8 @@ namespace LazyBuilder
 
             if (newServer != LOCALPOOL_MSG)
             {
+                if (!serverList.ContainsKey(newServer)) return;
+
                 Server currentServer = serverList[newServer];
                 ServerManager.SetServer(currentServer);
                 var result = await ServerManager.FetchServerData();

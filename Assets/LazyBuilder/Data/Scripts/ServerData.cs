@@ -1,29 +1,23 @@
-using Newtonsoft.Json;
-using System.Collections;
+using System;
 using System.Collections.Generic;
-using UnityEngine;
-
 
 namespace LazyBuilder
 {
+    [Serializable]
     public class ServerData
     {
-        [JsonProperty("Id")]
-        public string Id { get; set; }
+        public string Id;
 
-        [JsonProperty("Items")]
-        public List<Item> Items { get; set; }
+        public List<Item> Items;
     }
 
+    [Serializable]
     public class Item
     {
-        [JsonProperty("Id")]
-        public string Id { get; set; }
+        public string Id;
 
-        [JsonProperty("TypeIds")]
-        public List<string> TypeIds { get; set; }
+        public List<string> TypeIds;
 
-        [JsonProperty("Tags")]
-        public List<string> Tags { get; set; }
+        public List<string> Tags;
     }
 }
