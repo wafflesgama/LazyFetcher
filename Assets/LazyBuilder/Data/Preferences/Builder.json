@@ -1,7 +1,7 @@
 {
     "LastServer": "Main",
-    "LastItem": "",
-    "LastItemType": "",
+    "LastItem": "Shotgun",
+    "LastItemType": "Double",
     "Servers_Type": [
         0
     ],
@@ -14,7 +14,7 @@
     "ServersBranch": [
         "main"
     ],
-    "PropCol": false,
-    "PropRb": false,
+    "PropCol": true,
+    "PropRb": true,
     "PageSize": 50
 }

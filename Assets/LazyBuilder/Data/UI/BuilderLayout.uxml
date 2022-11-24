@@ -11,7 +11,7 @@
                     <ui:VisualElement name="PoolsContainer" style="height: 95%; border-top-left-radius: 3px; border-bottom-left-radius: 3px; background-color: rgb(88, 88, 88); justify-content: center; padding-left: 0; padding-right: 0; padding-bottom: 0; margin-left: 3px; margin-right: -1px; margin-top: 1px; transition-property: background-color; transition-duration: 0.15s; transition-timing-function: ease-in-cubic; flex-direction: row; align-items: center; overflow: visible;">
                         <ui:Label text="Main" display-tooltip-when-elided="true" name="PoolSelected" style="margin-left: 10px; padding-right: 0; font-size: 13px; -unity-font-style: normal; display: flex; padding-left: 0; justify-content: flex-start; -unity-text-align: middle-left; margin-right: 5px; margin-top: 0;" />
                         <ui:VisualElement name="ServerDropIcon" style="width: 10px; height: 10px; margin-right: 5px; display: flex;" />
-                        <ui:DropdownField index="1" name="PoolsList" focusable="true" style="display: flex; visibility: visible; opacity: 0; position: absolute; left: 0; height: 100%; width: 100%; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; background-color: rgba(255, 255, 255, 0); overflow: visible;" />
+                        <ui:VisualElement name="PoolsList" focusable="true" style="display: flex; visibility: visible; opacity: 0; position: absolute; left: 0; height: 100%; width: 100%; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; background-color: rgba(255, 255, 255, 0); overflow: visible;" />
                     </ui:VisualElement>
                     <ui:TextField picking-mode="Ignore" usage-hints="DynamicColor" text="Search" name="SearchBar" style="justify-content: flex-start; flex-shrink: 0; flex-grow: 1; border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-left-color: rgb(255, 255, 255); border-right-color: rgb(255, 255, 255); border-top-color: rgb(255, 255, 255); border-bottom-color: rgb(255, 255, 255); background-color: rgb(42, 42, 42); padding-left: 0; -unity-text-outline-color: rgba(255, 255, 255, 0); -unity-background-image-tint-color: rgb(42, 42, 42); margin-left: 0; margin-top: 0; margin-bottom: 0; font-size: 13px; padding-top: 1px; padding-bottom: 1px; padding-right: 1px; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; color: rgb(255, 255, 255); flex-basis: 1px; height: 100%; margin-right: 0;" />
                     <ui:Button display-tooltip-when-elided="true" name="SearchBttn" style="padding-right: 0; padding-top: 0; padding-left: 0; height: 95%; width: 32px; background-color: rgb(88, 88, 88); border-left-color: rgba(255, 255, 255, 0); border-right-color: rgba(255, 255, 255, 0); border-top-color: rgba(255, 255, 255, 0); border-bottom-color: rgba(255, 255, 255, 0); padding-bottom: 0; margin-left: -28px; -unity-background-scale-mode: scale-and-crop; -unity-background-image-tint-color: rgb(255, 255, 255); justify-content: center; align-items: center; border-top-left-radius: 0; border-bottom-left-radius: 0; transition-property: background-color; transition-duration: 0.15s; transition-timing-function: ease-in-cubic; border-top-right-radius: 3px; border-bottom-right-radius: 3px; margin-right: 0;">
@@ -29,6 +29,7 @@
                         </ui:Button>
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:VisualElement name="test" />
                 <ui:VisualElement name="Body" style="margin-top: 9px; height: 100%; width: 100%; flex-direction: row;">
                     <ui:VisualElement name="TabContainer" style="background-color: rgb(34, 34, 34); width: auto; height: 100%; background-image: none; display: none;">
                         <ui:Button text="&#10;" display-tooltip-when-elided="true" name="Tab" style="border-top-right-radius: 0; border-bottom-right-radius: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-top: 2px; padding-bottom: 2px; margin-right: 0; margin-bottom: 5px; -unity-text-align: middle-center; -unity-paragraph-spacing: 0; margin-top: 13px;">
@@ -49,7 +50,7 @@
                     <ui:VisualElement name="Main" style="flex-grow: 1; flex-shrink: 0; width: 100%;">
                         <ui:VisualElement name="MainGrid" style="height: 90%; flex-grow: 1; flex-shrink: 0; background-color: rgba(0, 0, 0, 0.24); display: flex; overflow: hidden;">
                             <ui:ScrollView name="MainPage" mode="Vertical" show-horizontal-scroller="true" horizontal-scroller-visibility="Hidden" elasticity="0.12" style="background-color: rgba(0, 0, 0, 0); flex-grow: 1; width: auto; flex-direction: column; flex-wrap: wrap; flex-shrink: 0; align-items: flex-start; height: auto; display: flex;">
-                                <ui:GroupBox name="ItemsColumn1" style="flex-direction: row; width: 100%; max-width: none; flex-wrap: wrap; overflow: visible; flex-shrink: 0; align-items: flex-start;" />
+                                <ui:VisualElement name="ItemsColumn1" style="flex-direction: row; width: 100%; max-width: none; flex-wrap: wrap; overflow: visible; flex-shrink: 0; align-items: flex-start;" />
                             </ui:ScrollView>
                             <ui:VisualElement name="ErrorPage" style="flex-grow: 1; flex-shrink: 0; justify-content: center; align-items: center; overflow: hidden; display: none;">
                                 <ui:VisualElement style="flex-direction: row; justify-content: center; align-items: center; background-image: none; width: 96%; overflow: hidden; height: 60%;">
@@ -67,7 +68,7 @@
                             <ui:Label text="1-20 of 69 Results" display-tooltip-when-elided="true" name="PageIndexMssg" style="font-size: 8px; -unity-text-align: middle-left;" />
                             <ui:VisualElement name="Spacer" style="flex-grow: 1;" />
                             <ui:Label text="Page Size: " display-tooltip-when-elided="true" style="font-size: 8px; -unity-text-align: middle-left;" />
-                            <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="PageSizeDropdown" style="font-size: 8px; -unity-text-align: middle-left;" />
+                            <ui:VisualElement name="PageSizeDropdown" style="font-size: 8px; -unity-text-align: middle-left;" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -107,7 +108,7 @@
                                 <ui:Label text="Label" display-tooltip-when-elided="true" name="ItemTypeSelected" style="margin-left: 13px; margin-right: 15px; margin-top: 6px; margin-bottom: 6px; font-size: 15px; -unity-font-style: normal;" />
                                 <ui:VisualElement name="ItemTypeIcon" style="width: 16px; height: 20px; margin-right: 4px; justify-content: flex-start; -unity-background-scale-mode: scale-to-fit; margin-top: 0;" />
                             </ui:VisualElement>
-                            <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="ItemTypeDropdown" style="-unity-text-align: upper-left; padding-bottom: 0; margin-bottom: 0; padding-left: 0; padding-right: 0; position: absolute; width: 100%; height: 100%; opacity: 0; margin-left: 0; margin-right: 0; margin-top: 0; flex-direction: column; flex-shrink: 1; display: flex; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); -unity-slice-left: -57; -unity-slice-top: -57; -unity-slice-right: -57; -unity-slice-bottom: -57; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; background-color: rgb(197, 165, 165);" />
+                            <ui:VisualElement name="ItemTypeDropdown" style="-unity-text-align: upper-left; padding-bottom: 0; margin-bottom: 0; padding-left: 0; padding-right: 0; position: absolute; width: 100%; height: 100%; opacity: 0; margin-left: 0; margin-right: 0; margin-top: 0; flex-direction: column; flex-shrink: 1; display: flex; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); -unity-slice-left: -57; -unity-slice-top: -57; -unity-slice-right: -57; -unity-slice-bottom: -57; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; background-color: rgb(197, 165, 165);" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
@@ -140,11 +141,11 @@
             <ui:VisualElement name="Spacer" style="flex-grow: 1; flex-shrink: 10;" />
             <ui:VisualElement name="About" style="flex-direction: row; align-items: center; margin-right: 5px;">
                 <ui:VisualElement name="AboutIcon" style="width: 17px; height: 14px; justify-content: flex-start; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 0; padding-right: 0; -unity-background-scale-mode: scale-to-fit; opacity: 0.61;" />
-                <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="AboutDrop" tooltip="About" style="position: absolute; width: 100%; display: flex; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; opacity: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 5px; padding-right: 5px;" />
+                <ui:VisualElement choices="System.Collections.Generic.List`1[System.String]" name="AboutDrop" tooltip="About" style="position: absolute; width: 100%; display: flex; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; opacity: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;" />
             </ui:VisualElement>
             <ui:VisualElement name="Settings" style="flex-direction: row; align-items: center; margin-right: 5px;">
                 <ui:VisualElement name="SettingsIcon" style="width: 17px; height: 100%; justify-content: flex-start; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 0; padding-right: 0;" />
-                <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="SettingsDrop" tooltip="Settings" style="position: absolute; width: 100%; display: flex; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; opacity: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 5px; padding-right: 5px;" />
+                <ui:VisualElement name="SettingsDrop" tooltip="Settings" style="position: absolute; width: 100%; display: flex; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; opacity: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

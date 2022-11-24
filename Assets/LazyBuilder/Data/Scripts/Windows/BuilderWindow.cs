@@ -8,7 +8,6 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static LazyBuilder.PathFactory;
 using static LazyBuilder.ServerManager;
 
 namespace LazyBuilder
@@ -34,7 +33,7 @@ namespace LazyBuilder
         private TextField _searchBar;
 
         //Servers DropDown
-        private DropdownField _serversDropdown;
+        private PopupField<string> _serversDropdown;
         private VisualElement _serversDropContainer;
         private TextElement _serverDropSelected;
         private VisualElement _serverDropIcon;
@@ -61,13 +60,13 @@ namespace LazyBuilder
         private TextElement _pageIndexMssg;
         private Button _prevPageBttn;
         private Button _nextPageBttn;
-        private DropdownField _pageSizeDropdown;
+        private PopupField<string> _pageSizeDropdown;
 
         private TextElement _mainTitle;
         private VisualElement _mainImg;
 
         private VisualElement _itemTypeIcon;
-        private DropdownField _itemTypeDropdown;
+        private PopupField<string> _itemTypeDropdown;
         private TextElement _itemTypeSelected;
 
         private VisualElement _colorPallete;
@@ -124,11 +123,11 @@ namespace LazyBuilder
         private TextElement _debugMssg;
 
         //Settings
-        private DropdownField _settingdDrop;
+        private PopupField<string> _settingdDrop;
         private VisualElement _settingsIcon;
 
         //About
-        private DropdownField _aboutDrop;
+        private PopupField<string> _aboutDrop;
         private VisualElement _aboutIcon;
 
         private Vector3 initPos;
@@ -194,6 +193,7 @@ namespace LazyBuilder
 
             SetupBaseUI();
             SetupBindings();
+            SetupPatchedDropdowns();
 
             _generateBttn.SetEnabled(false);
             _similarSortBttn.SetEnabled(false);
@@ -282,10 +282,8 @@ namespace LazyBuilder
 
             _serversBackBttn = (Button)_root.Q("Back_servers");
 
-
             //Servers Dropdown
             _serversDropContainer = _root.Q("PoolsContainer");
-            _serversDropdown = (DropdownField)_root.Q("PoolsList");
             _serverDropSelected = (TextElement)_root.Q("PoolSelected");
             _serverDropIcon = _root.Q("ServerDropIcon");
 
@@ -305,11 +303,9 @@ namespace LazyBuilder
             _prevPageBttn = (Button)_root.Q("PrevPageBttn");
             _nextPageBttn = (Button)_root.Q("NextPageBttn");
             _pageIndexMssg = (TextElement)_root.Q("PageIndexMssg");
-            _pageSizeDropdown = (DropdownField)_root.Q("PageSizeDropdown");
 
             _itemTypeIcon = _root.Q("ItemTypeIcon");
             _itemTypeSelected = (TextElement)_root.Q("ItemTypeSelected");
-            _itemTypeDropdown = (DropdownField)_root.Q("ItemTypeDropdown");
 
 
             //Generation Props
@@ -340,14 +336,45 @@ namespace LazyBuilder
             _debugMssg = (TextElement)_root.Q("Debug");
 
             //Settings
-            _settingdDrop = (DropdownField)_root.Q("SettingsDrop");
             _settingsIcon = _root.Q("SettingsIcon");
 
             //About
-            _aboutDrop = (DropdownField)_root.Q("AboutDrop");
             _aboutIcon = _root.Q("AboutIcon");
 
         }
+
+
+        private void SetupPatchedDropdowns()
+        {
+            //Servers Dropdown
+            _serversDropdown = Utils.CreateDropdownField(_root.Q("PoolsList"));
+
+            //Pagination
+            _pageSizeDropdown = Utils.CreateDropdownField(_root.Q("PageSizeDropdown"));
+            _itemTypeDropdown = Utils.CreateDropdownField(_root.Q("ItemTypeDropdown"));
+
+            //Settings
+            _settingdDrop = Utils.CreateDropdownField(_root.Q("SettingsDrop"));
+
+            //About
+            _aboutDrop = Utils.CreateDropdownField(_root.Q("AboutDrop"));
+
+
+
+            ////Servers Dropdown
+            //_serversDropdown = (PopupField)_root.Q("PoolsList");
+
+            ////Pagination
+            //_pageSizeDropdown = (PopupField)_root.Q("PageSizeDropdown");
+            //_itemTypeDropdown = (PopupField)_root.Q("ItemTypeDropdown");
+
+            ////Settings
+            //_settingdDrop = (PopupField)_root.Q("SettingsDrop");
+
+            ////About
+            //_aboutDrop = (PopupField)_root.Q("AboutDrop")
+        }
+
 
         private void SetupIcons()
         {
@@ -528,9 +555,13 @@ namespace LazyBuilder
             groundMesh = groundObj.GetComponent<MeshFilter>().sharedMesh;
 
             groundMat = AssetDatabase.LoadAssetAtPath<Material>(
-                PathFactory.BuildMaterialFilePath(PathFactory.MATERIALS_GROUND_FILE));
+              PathFactory.BuildMaterialFilePath(PathFactory.MATERIALS_GROUND_FILE));
+            Shader defaultShader;
+            if (UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset == null)
+                defaultShader = AssetDatabase.GetBuiltinExtraResource<Shader>("Standard.shader");
+            else
+                defaultShader = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset.defaultShader;
 
-            var defaultShader = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset.defaultShader;
             if (groundMat.shader != defaultShader)
                 groundMat.shader = defaultShader;
         }
@@ -1161,7 +1192,7 @@ namespace LazyBuilder
             {
                 if (hit.transform.GetInstanceID() == gObject.transform.GetInstanceID()) continue;
                 //position = hit.point;
-                position = hit.point + new Vector3(0, gMesh.bounds.extents.y, 0) - gMesh.localBounds.center;
+                position = hit.point + new Vector3(0, gMesh.bounds.extents.y, 0) - gMesh.bounds.center;
                 upVector = hit.normal;
                 break;
             }
@@ -1551,7 +1582,7 @@ namespace LazyBuilder
             foreach (var item in _serversListContainer.Children())
             {
                 var idField = (TextField)item.Q("Id");
-                var typeField = (DropdownField)item.Q("Type");
+                var typeField = Utils.CreateDropdownField(item.Q("Type"));
                 var srcField = (TextField)item.Q("Src");
                 var branchField = (TextField)item.Q("Branch");
 
@@ -1572,7 +1603,7 @@ namespace LazyBuilder
 
                 preferences.ServersId.Add(idField.value);
                 preferences.ServersSrc.Add(srcField.value);
-                preferences.Servers_Type.Add(Enum.Parse<ServerType>(typeField.value));
+                preferences.Servers_Type.Add((ServerType)Enum.Parse(typeof(ServerType), typeField.value));
 
                 //If Server is Type GIT - Add branch
                 preferences.ServersBranch.Add(
@@ -1604,7 +1635,7 @@ namespace LazyBuilder
             var branchField = (TextField)element.Q("Branch");
             if (branch != null) branchField.value = branch;
 
-            var typesField = (DropdownField)element.Q("Type");
+            var typesField = Utils.CreateDropdownField(element.Q("Type"));
             typesField.choices = GetServerTypes();
             typesField.RegisterValueChangedCallback(x =>
             {

@@ -56,7 +56,7 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:Label text="Thumbnail Gen" display-tooltip-when-elided="true" style="padding-bottom: 5px; -unity-font-style: bold; margin-top: 34px;" />
-                    <ui:DropdownField label="Item Type" index="-1" choices="System.Collections.Generic.List`1[System.String]" name="ItemTypeScreen" style="margin-bottom: 2px; margin-left: 0; margin-right: 3px; height: 18px;" />
+                    <ui:VisualElement label="Item Type" name="ItemTypeScreen" style="margin-bottom: 2px; margin-left: 0; margin-right: 3px; height: 18px;" />
                     <ui:VisualElement style="flex-direction: row; padding-top: 2px; align-items: center;">
                         <ui:Label text="Pos offset" display-tooltip-when-elided="true" />
                         <ui:VisualElement style="flex-grow: 1;" />

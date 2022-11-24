@@ -5,7 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace LazyBuilder
 {
@@ -109,6 +111,21 @@ namespace LazyBuilder
                 .OrderBy(f => f.LastWriteTime)
                 .Select(f => f.Name)
                 .ToArray();
+        }
+
+        public static PopupField<string> CreateDropdownField(VisualElement parentElement)
+        {
+            PopupField<string> field = new PopupField<string>();
+            field.style.flexGrow = parentElement.style.flexGrow;
+            field.style.flexWrap = parentElement.style.flexWrap;
+            //field.style.visibility= parentElement.style.visibility;
+            //field.style.opacity= parentElement.style.opacity;
+            field.style.width = new StyleLength(Length.Percent(100));
+            field.style.height = new StyleLength(Length.Percent(100));
+
+            parentElement.Add(field);
+            return field;
+
         }
 
     }

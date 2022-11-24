@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -46,7 +47,7 @@ namespace LazyBuilder
 
         //Side Tab Area - Properties
         private VisualElement _types;
-        private DropdownField _typesScreen;
+        private PopupField<string> _typesScreen;
         private VisualElement _tags;
         private List<TextField> _editableTags;
         private int tagInEdit;
@@ -141,7 +142,7 @@ namespace LazyBuilder
 
             //Side Tab Area - Properties
             _types = _root.Q("Types");
-            _typesScreen = (DropdownField)_root.Q("ItemTypeScreen");
+            _typesScreen = Utils.CreateDropdownField(_root.Q("ItemTypeScreen"));
             _tags = _root.Q("Tags");
             _addTagBttn = (Button)_root.Q("AddTag");
             _removeTagBttn = (Button)_root.Q("RemoveTag");
