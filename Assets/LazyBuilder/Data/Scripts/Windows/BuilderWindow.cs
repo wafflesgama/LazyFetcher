@@ -527,12 +527,12 @@ namespace LazyBuilder
 
             groundMesh = groundObj.GetComponent<MeshFilter>().sharedMesh;
 
+
+
             groundMat = AssetDatabase.LoadAssetAtPath<Material>(
                 PathFactory.BuildMaterialFilePath(PathFactory.MATERIALS_GROUND_FILE));
 
-            var defaultShader = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset.defaultShader;
-            if (groundMat.shader != defaultShader)
-                groundMat.shader = defaultShader;
+            groundMat = groundMat.ConvertToDefault();
         }
 
         private void SetupCamera()

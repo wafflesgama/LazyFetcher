@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 
 namespace LazyBuilder
@@ -109,6 +110,19 @@ namespace LazyBuilder
                 .OrderBy(f => f.LastWriteTime)
                 .Select(f => f.Name)
                 .ToArray();
+        }
+
+        public static Material ConvertToDefault(this Material material)
+        {
+            Shader defaultShader;
+            if (UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset == null)
+                defaultShader = AssetDatabase.GetBuiltinExtraResource<Shader>("Standard.shader");
+            else
+                defaultShader = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset.defaultShader;
+
+            material.shader = defaultShader;
+            return material;
+
         }
 
     }
