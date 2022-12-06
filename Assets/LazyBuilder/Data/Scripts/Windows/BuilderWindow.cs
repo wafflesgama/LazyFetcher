@@ -107,8 +107,10 @@ namespace LazyBuilder
         private bool renderPreview;
 
         private GameObject previewObj;
-        private Mesh previewMesh;
+        private List<(Mesh, Material[])> previewMeshes;
+        private Bounds previewBounds;
         private Vector3 previewGroundPos;
+        private List<Material> previewMaterials;
 
         private Mesh groundMesh;
         private Material groundMat;
@@ -135,8 +137,6 @@ namespace LazyBuilder
         bool setDist;
         bool isSearchFocused;
 
-        Material[] previewMats;
-        List<Color> previewColors;
 
         private VisualTreeAsset _itemTemplate;
 
@@ -527,7 +527,7 @@ namespace LazyBuilder
 
             groundMesh = groundObj.GetComponent<MeshFilter>().sharedMesh;
 
-
+            previewMeshes = new List<(Mesh, Material[])>();
 
             groundMat = AssetDatabase.LoadAssetAtPath<Material>(
                 PathFactory.BuildMaterialFilePath(PathFactory.MATERIALS_GROUND_FILE));
@@ -551,9 +551,19 @@ namespace LazyBuilder
             previewRenderUtility.camera.nearClipPlane = .001f;
             previewRenderUtility.camera.farClipPlane = 6000f;
             previewRenderUtility.camera.fieldOfView = 3;
+            previewRenderUtility.lights[0].intensity = 1.5f;
+            previewRenderUtility.lights[0].bounceIntensity = 5;
+            previewRenderUtility.lights[0].bounceIntensity = 5;
+            previewRenderUtility.lights[0].areaSize = Vector2.one*5;
 
-            previewRenderUtility.lights[0].intensity = 1;
-            previewRenderUtility.lights[1].intensity = 1;
+            previewRenderUtility.lights[1].intensity = .7f;
+            previewRenderUtility.lights[1].bounceIntensity = 5;
+            previewRenderUtility.lights[1].color = Color.white;
+            previewRenderUtility.lights[1].areaSize = Vector2.one*5;
+
+            previewRenderUtility.lights[0].shadows = LightShadows.Hard;
+            previewRenderUtility.lights[1].shadows = LightShadows.Hard;
+
             previewRenderUtility.ambientColor = Color.white;
             //previewRenderUtility.ambientColor = Color.white;
             //previewRenderUtility.camera.transform.position = new Vector3(0, 10.5f, -18);
@@ -594,17 +604,18 @@ namespace LazyBuilder
             }
 
 
-            if (previewMesh != null)
+            if (previewMeshes.Count > 0)
             {
                 //Debug.Log("Drawing preview Mesh");
-
-                for (int i = 0; i < previewMats.Length; i++)
+                foreach (var previewMesh in previewMeshes)
                 {
-                    previewRenderUtility.DrawMesh(previewMesh, Vector3.zero, Quaternion.Euler(0, 0, 0), previewMats[i],
-                        i);
-                    //previewRenderUtility.camera.transform.RotateAround(previewMesh.bounds.center, Vector3.up, Time.deltaTime);
+                    for (int i = 0; i < previewMesh.Item2.Length; i++)
+                    {
+                        previewRenderUtility.DrawMesh(previewMesh.Item1, Vector3.zero, Quaternion.Euler(0, 0, 0), previewMesh.Item2[i], i);
+                    }
                 }
-
+                //previewRenderUtility.lights[0].color = Color.white;
+                //previewRenderUtility.lights[1].color = Color.white;
                 previewRenderUtility.DrawMesh(groundMesh, previewGroundPos, Vector3.one * 1000,
                     Quaternion.Euler(90, 0, 0), groundMat, 0, new MaterialPropertyBlock(), null, false);
             }
@@ -653,9 +664,9 @@ namespace LazyBuilder
                 {
                     if (isRotatingPrev)
                     {
-                        previewRenderUtility.camera.transform.RotateAround(previewMesh.bounds.center,
+                        previewRenderUtility.camera.transform.RotateAround(previewBounds.center,
                             previewRenderUtility.camera.transform.right, posDif.y * 8 * Time.deltaTime);
-                        previewRenderUtility.camera.transform.RotateAround(previewMesh.bounds.center, Vector3.up,
+                        previewRenderUtility.camera.transform.RotateAround(previewBounds.center, Vector3.up,
                             posDif.x * 8 * Time.deltaTime);
                         Repaint();
                     }
@@ -1209,13 +1220,13 @@ namespace LazyBuilder
 
         #region Colour Picker
 
-        private VisualElement CreateColorPicker(Color color)
+        private VisualElement CreateColorPicker(Material material)
         {
             var field = new ColorField();
             //field.hdr = true;
             field.style.width = 60;
-            field.value = color;
-            field.RegisterValueChangedCallback(ColorChanged);
+            field.value = material.color;
+            field.RegisterValueChangedCallback((x) => ColorChanged(material, x.newValue));
 
             var container = new VisualElement();
             container.Add(field);
@@ -1234,13 +1245,13 @@ namespace LazyBuilder
             return container;
         }
 
-        private void ColorChanged(ChangeEvent<Color> value)
+        private void ColorChanged(Material material, Color color)
         {
-            var index = previewColors.IndexOf(value.previousValue);
+            //If no material with the specified name in the preview Meshes is registered - return
+            if (!previewMaterials.Where(x => x.name == material.name).Any()) return;
 
-            if (index == -1) return;
-            previewColors[index] = value.newValue;
-            previewMats[index].color = value.newValue;
+            Material selectedMat = previewMaterials.Where(x => x.name == material.name).First();
+            selectedMat.color = color;
         }
 
         #endregion Colour Picker
@@ -1373,8 +1384,8 @@ namespace LazyBuilder
 
             //Reset Mesh Preview
             previewObj = null;
-            previewMesh = null;
-            previewMats = null;
+            previewMeshes.Clear();
+
 
             _itemTypeSelected.text = value;
             _propName.value = $"{value.Capitalize()} {selectedItemId.Capitalize()}";
@@ -1390,35 +1401,72 @@ namespace LazyBuilder
             }
 
 
-            var meshRend = previewObj.gameObject.GetComponent<MeshRenderer>();
+            var previewMeshFilters = previewObj.GetComponentsInChildren<MeshFilter>();
 
-            if (meshRend == null) return;
+            if (previewMeshFilters.Length == 0) return;
 
-            previewMats = meshRend.sharedMaterials;
-            previewColors = new List<Color>();
 
-            //Make all materials not glossy
-            foreach (var material in previewMats)
+            foreach (var meshFilter in previewMeshFilters)
             {
-                material.SetColor("_EmissionColor", material.color);
-                material.SetFloat("_Glossiness", 0f);
-                previewColors.Add(material.color);
+                var renderer = meshFilter.gameObject.GetComponent<MeshRenderer>();
+                if (renderer == null) continue;
+
+                previewMeshes.Add((meshFilter.sharedMesh, renderer.sharedMaterials));
+
             }
+
+
+            previewMaterials = new List<Material>();
+
+            Vector3 min = Vector3.positiveInfinity;
+            Vector3 max = Vector3.zero;
+            Vector3 center = Vector3.zero;
+            previewBounds.center = Vector3.zero;
+
+            foreach (var previewMesh in previewMeshes)
+            {
+                foreach (var material in previewMesh.Item2)
+                {
+                    // Skipping duplicate materials
+                    if (!previewMaterials.Contains(material))
+                    {
+                        ////Make each material not glossy
+
+                        //material.SetColor("_EmissionColor", material.color);
+
+                        //URP 2020
+                        material.SetFloat("_Glossiness", 0f);
+
+                        //URP 2021
+                        material.SetFloat("_Smoothness", 0f);
+                        material.SetFloat("_Metallic", 0f);
+
+                        //Add Separate List with unique materials throughout the object's meshes
+                        previewMaterials.Add(material);
+                    }
+                }
+                center += previewMesh.Item1.bounds.center;
+
+                min = Vector3.Min(previewMesh.Item1.bounds.min, min);
+                max = Vector3.Max(previewMesh.Item1.bounds.max, max);
+            }
+
+            //Get average center point
+            previewBounds.center = center / previewMeshes.Count;
+            previewBounds.min = min;
+            previewBounds.max = max;
 
             //Add respective color pickers
             _colorPallete.Clear();
-            for (int i = 0; i < previewColors.Count; i++)
+            foreach (var material in previewMaterials)
             {
-                var field = CreateColorPicker(previewColors[i]);
+                var field = CreateColorPicker(material);
                 _colorPallete.Add(field);
             }
 
-            previewMesh = previewObj.gameObject.GetComponent<MeshFilter>().sharedMesh;
-            previewGroundPos = new Vector3(previewMesh.bounds.center.x, previewMesh.bounds.min.y - 0.01f,
-                previewMesh.bounds.center.z);
+            previewGroundPos = new Vector3(previewBounds.center.x, previewBounds.min.y - 0.01f, previewBounds.center.z);
 
-            var bounds = previewMesh.bounds;
-            var objectSizes = bounds.max - bounds.min;
+            var objectSizes = previewBounds.max - previewBounds.min;
             var objectSize = Mathf.Max(objectSizes.x, objectSizes.y, objectSizes.z);
 
 
@@ -1433,7 +1481,7 @@ namespace LazyBuilder
             distance += 0.5f * objectSize;
 
 
-            previewRenderUtility.camera.transform.RotateAround(previewMesh.bounds.center, Vector3.up, Time.deltaTime);
+            previewRenderUtility.camera.transform.RotateAround(previewBounds.center, Vector3.up, Time.deltaTime);
             await Task.Delay(3);
 
             _generateBttn.SetEnabled(true);
@@ -1441,7 +1489,7 @@ namespace LazyBuilder
             //If camera has been destroyed while waiting - return
             if (previewRenderUtility == null || previewRenderUtility.camera == null) return;
 
-            var targetPosition = bounds.center - distance * previewRenderUtility.camera.transform.forward;
+            var targetPosition = previewBounds.center - distance * previewRenderUtility.camera.transform.forward;
             previewRenderUtility.camera.transform.position = targetPosition;
 
 
