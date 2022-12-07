@@ -95,13 +95,13 @@ namespace LazyBuilder
 
         private Button _generateBttn;
 
-
         private StyleColor defaultButtonColor;
         private StyleColor activeButtonColor;
 
         //private Material fallbackMat;
 
         private PreviewRenderUtility previewRenderUtility;
+        private Vector3 previewRotation;
         private Transform previewTransform;
         private Label _previewLoaderText;
         private bool renderPreview;
@@ -554,12 +554,13 @@ namespace LazyBuilder
             previewRenderUtility.lights[0].intensity = 1.5f;
             previewRenderUtility.lights[0].bounceIntensity = 5;
             previewRenderUtility.lights[0].bounceIntensity = 5;
-            previewRenderUtility.lights[0].areaSize = Vector2.one*5;
+            previewRenderUtility.lights[0].areaSize = Vector2.one * 5;
+            previewRenderUtility.lights[0].transform.forward = Vector3.down;
 
             previewRenderUtility.lights[1].intensity = .7f;
             previewRenderUtility.lights[1].bounceIntensity = 5;
             previewRenderUtility.lights[1].color = Color.white;
-            previewRenderUtility.lights[1].areaSize = Vector2.one*5;
+            previewRenderUtility.lights[1].areaSize = Vector2.one * 5;
 
             previewRenderUtility.lights[0].shadows = LightShadows.Hard;
             previewRenderUtility.lights[1].shadows = LightShadows.Hard;
@@ -668,7 +669,19 @@ namespace LazyBuilder
                             previewRenderUtility.camera.transform.right, posDif.y * 8 * Time.deltaTime);
                         previewRenderUtility.camera.transform.RotateAround(previewBounds.center, Vector3.up,
                             posDif.x * 8 * Time.deltaTime);
-                        Repaint();
+
+
+                        previewRenderUtility.lights[0].transform.RotateAround(previewBounds.center,
+                            previewRenderUtility.camera.transform.right, posDif.y * 8 * Time.deltaTime);
+                        previewRenderUtility.lights[0].transform.RotateAround(previewBounds.center, Vector3.up,
+                            posDif.x * 8 * Time.deltaTime);
+
+                        previewRenderUtility.lights[1].transform.RotateAround(previewBounds.center,
+                            previewRenderUtility.camera.transform.right, posDif.y * 8 * Time.deltaTime);
+                        previewRenderUtility.lights[1].transform.RotateAround(previewBounds.center, Vector3.up,
+                            posDif.x * 8 * Time.deltaTime);
+
+                        //previewRotation += new Vector3(posDif.y * 8 * Time.deltaTime, 0, posDif.x * 8 * Time.deltaTime);
                     }
 
                     if (isTranslatingPrev)
@@ -677,8 +690,8 @@ namespace LazyBuilder
                                                                           posDif.x * 0.07f * Time.deltaTime;
                         previewRenderUtility.camera.transform.position += previewRenderUtility.camera.transform.up *
                                                                           posDif.y * 0.07f * Time.deltaTime;
-                        Repaint();
                     }
+                    Repaint();
                 }
 
                 lastMousePos = evt.mousePosition;
