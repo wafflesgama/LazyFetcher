@@ -59,7 +59,7 @@ namespace LazyBuilder
             try
             {
                 src = src.AbsoluteFormat();
-                response.Data = await File.ReadAllTextAsync($"{serverPath}\\{src}\\{fileName}.{fileType}");
+                response.Data =  File.ReadAllText($"{serverPath}\\{src}\\{fileName}.{fileType}");
                 response.Success = true;
             }
             catch (Exception e)
@@ -80,7 +80,7 @@ namespace LazyBuilder
 
                 if (!File.Exists(path)) return null;
 
-                byte[] imageBytes = await File.ReadAllBytesAsync(path);
+                byte[] imageBytes =  File.ReadAllBytes(path);
 
                 response.Data = new Texture2D(2, 2);
                 response.Data.LoadImage(imageBytes);

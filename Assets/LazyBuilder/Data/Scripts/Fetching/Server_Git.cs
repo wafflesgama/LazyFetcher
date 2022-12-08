@@ -152,7 +152,7 @@ namespace LazyBuilder
                     if (!File.Exists(saveFilePath))
                         File.Create(saveFilePath).Close();
 
-                    await File.WriteAllBytesAsync(saveFilePath, bytes);
+                    File.WriteAllBytes(saveFilePath, bytes);
 
                 }
 
@@ -176,7 +176,7 @@ namespace LazyBuilder
             return gitRepo;
         }
 
-        public string GetBranch()   
+        public string GetBranch()
         {
             return gitBranch;
         }
