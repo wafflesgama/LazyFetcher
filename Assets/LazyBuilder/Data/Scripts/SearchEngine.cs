@@ -62,8 +62,8 @@ namespace LazyBuilder
             int wordMatches = 0;
 
             source = source.SeparateCase();
-            string[] sourceSplitted = source.Split(" ");
-            string[] keySplitted = key.Split(" ");
+            string[] sourceSplitted = source.Split(' ');
+            string[] keySplitted = key.Split(' ');
 
             foreach (var sourceSplit in sourceSplitted)
             {
