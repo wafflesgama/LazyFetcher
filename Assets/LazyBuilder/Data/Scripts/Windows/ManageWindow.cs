@@ -180,7 +180,7 @@ namespace LazyBuilder
 
             //Side Area - Footer
             _openFolderBttn.RegisterCallback<ClickEvent>((x) => OpenFolder());
-            _singleThumbBttn.RegisterCallback<ClickEvent>((x) => GenerateSingleThumbnail());
+            _singleThumbBttn.RegisterCallback<ClickEvent>(async (x) => await GenerateSingleThumbnail());
         }
 
         private void SetupItems()

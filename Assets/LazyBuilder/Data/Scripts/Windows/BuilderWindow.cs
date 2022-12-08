@@ -181,7 +181,7 @@ namespace LazyBuilder
 
         #region Unity Functions
 
-        private async void OnEnable()
+        private void OnEnable()
         {
             InitVariables();
             InitPreferences();
@@ -515,10 +515,10 @@ namespace LazyBuilder
             //Add Callback
             button.clicked += () => ItemSelected(name, img);
 
-            if (!HasStoredItem(name))
+            if (HasStoredItem(name))
             {
                 var overlay = button.Q("Overlay");
-                overlay.visible = false;
+                overlay.visible = true;
             }
         }
 
@@ -1129,7 +1129,7 @@ namespace LazyBuilder
         }
 
 
-        private async void PreviewLoadAnimFrame()
+        private void PreviewLoadAnimFrame()
         {
             if (!isLoadingPrev)
             {

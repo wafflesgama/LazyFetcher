@@ -59,7 +59,7 @@ namespace LazyBuilder
                 if (data.Items == null)
                     throw new Exception();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 if (OnInvalidData != null)
                     OnInvalidData.Invoke();
