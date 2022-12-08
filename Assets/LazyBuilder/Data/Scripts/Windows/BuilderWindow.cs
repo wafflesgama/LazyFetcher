@@ -586,20 +586,14 @@ namespace LazyBuilder
             previewRenderUtility.lights[0].intensity = 1;
             previewRenderUtility.lights[1].intensity = 1;
             previewRenderUtility.ambientColor = Color.white;
-            //previewRenderUtility.ambientColor = Color.white;
-            //previewRenderUtility.camera.transform.position = new Vector3(0, 10.5f, -18);
-            //previewRenderUtility.camera.transform.eulerAngles = new Vector3(30, 0, 0);
 
             previewTransform.position = new Vector3(0, 10.5f, -18);
             previewRenderUtility.camera.transform.position += (new Vector3(0, -.5835f, 1) * 17);
 
-            //previewRenderUtility.camera.clearFlags = CameraClearFlags.Skybox;
             previewRenderUtility.camera.clearFlags = CameraClearFlags.SolidColor;
-            previewRenderUtility.camera.backgroundColor = Color.red;
+            previewRenderUtility.camera.backgroundColor = new Color(0, 0, 0, 0);
 
             previewTransform.eulerAngles = new Vector3(30, 0, 0);
-
-            //previewRenderUtility.camera.orthographic = true;
         }
 
 
@@ -637,7 +631,7 @@ namespace LazyBuilder
                 }
 
                 previewRenderUtility.DrawMesh(groundMesh, previewGroundPos, Vector3.one * 1000,
-                    Quaternion.Euler(90, 0, 0), groundMat, 0, new MaterialPropertyBlock(), null, false);
+                    Quaternion.Euler(270, 0, 0), groundMat, 0, new MaterialPropertyBlock(), null, false);
             }
 
             previewRenderUtility.camera.Render();
@@ -838,7 +832,7 @@ namespace LazyBuilder
 
             if (!File.Exists(localPath)) return null;
 
-            byte[] imageBytes = await File.ReadAllBytesAsync(localPath);
+            byte[] imageBytes = File.ReadAllBytes(localPath);
 
             Texture2D image = new Texture2D(2, 2);
             image.LoadImage(imageBytes);
@@ -1256,8 +1250,8 @@ namespace LazyBuilder
             container.style.overflow = Overflow.Hidden;
 
             var borderRadius = 10;
-            StyleScale s = new Scale(new Vector3(1, 1.2f, 1));
-            container.style.scale = s;
+            //StyleScale s = new Scale(new Vector3(1, 1.2f, 1));
+            //container.style.scale = s;
             container.style.borderBottomLeftRadius = borderRadius;
             container.style.borderBottomRightRadius = borderRadius;
             container.style.borderTopLeftRadius = borderRadius;
