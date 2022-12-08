@@ -87,7 +87,7 @@ namespace LazyBuilder
             if (File.Exists(filePath))
                 File.Delete(filePath);
 
-            await File.WriteAllBytesAsync(filePath, bytes);
+             File.WriteAllBytes(filePath, bytes);
 
             File.Delete(tempFileAbsPath);
         }
