@@ -59,5 +59,5 @@ If you want to be a part of this project and contribute to it feel free to do so
 <br/>
 
 ## Licensing 📜
-The Lazy ecosystem is licensed under [GNU GPLv3](./LICENSE) which lets people do almost anything they want with it, except distributing closed source versions.<br/>
+The Lazy ecosystem is licensed under MIT License [(consult it here)](./LICENSE) <br/>
 Crediting is not required but is kindly appreciated 🤗
