@@ -88,8 +88,11 @@ namespace LazyBuilder
             if (File.Exists(filePath))
                 File.Delete(filePath);
 
-             File.WriteAllBytes(filePath, bytes);
-
+#if UNITY_2021_1_OR_NEWER
+            await File.WriteAllBytesAsync(filePath, bytes);
+#else
+                    File.WriteAllBytes(filePath, bytes);
+#endif
             File.Delete(tempFileAbsPath);
         }
 
@@ -114,9 +117,13 @@ namespace LazyBuilder
                 .ToArray();
         }
 
-        public static PopupField<string> CreateDropdownField(VisualElement parentElement)
+        public static PopupField<string> CreateDropdownField(VisualElement parentElement, string name = null)
         {
             PopupField<string> field = new PopupField<string>();
+
+            if (name != null)
+                field.name = name;
+
             field.style.flexGrow = parentElement.style.flexGrow;
             field.style.flexWrap = parentElement.style.flexWrap;
             //field.style.visibility= parentElement.style.visibility;

@@ -33,7 +33,7 @@
                 <ui:VisualElement name="Body" style="margin-top: 9px; height: 100%; width: 100%; flex-direction: row;">
                     <ui:VisualElement name="Main" style="flex-grow: 1; flex-shrink: 0; width: 100%;">
                         <ui:VisualElement name="MainGrid" style="height: 90%; flex-grow: 1; flex-shrink: 0; background-color: rgba(0, 0, 0, 0.24); display: flex; overflow: hidden;">
-                            <ui:ScrollView name="MainPage" mode="Vertical" show-horizontal-scroller="true" horizontal-scroller-visibility="Hidden" elasticity="0.12" style="background-color: rgba(0, 0, 0, 0); flex-grow: 1; width: auto; flex-direction: column; flex-wrap: wrap; flex-shrink: 0; align-items: flex-start; height: auto; display: flex;">
+                            <ui:ScrollView name="MainPage" mode="Vertical" show-horizontal-scroller="true" horizontal-scroller-visibility="Hidden" elasticity="0.12" style="background-color: rgba(0, 0, 0, 0); flex-grow: 1; width: auto; flex-direction: column; flex-wrap: wrap; flex-shrink: 0; align-items: flex-start; height: auto; display: none;">
                                 <ui:VisualElement name="ItemsColumn1" style="flex-direction: row; width: 100%; max-width: none; flex-wrap: wrap; overflow: visible; flex-shrink: 0; align-items: flex-start;" />
                             </ui:ScrollView>
                             <ui:VisualElement name="ErrorPage" style="flex-grow: 1; flex-shrink: 0; justify-content: center; align-items: center; overflow: hidden; display: none;">
@@ -42,6 +42,15 @@
                                     <ui:VisualElement name="VisualElement" style="width: 41%; opacity: 0.27; margin-left: -32px;">
                                         <ui:Label text="Oops!" display-tooltip-when-elided="true" name="Error_Title" style="font-size: 49%; white-space: nowrap; -unity-font-style: bold; margin-bottom: 6px; width: 100%; overflow: hidden; flex-wrap: wrap;" />
                                         <ui:Label text="No items found" display-tooltip-when-elided="true" name="Error_Subtitle" style="font-size: 17%; white-space: normal; width: 100%; overflow: hidden; flex-wrap: wrap;" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement name="LoadingPage" style="flex-grow: 1; flex-shrink: 0; justify-content: center; align-items: center; overflow: hidden; display: none;">
+                                <ui:VisualElement style="flex-direction: row; justify-content: center; align-items: center; background-image: none; width: 96%; overflow: hidden; height: 60%;">
+                                    <ui:VisualElement name="Error_Img" style="width: 315px; height: 269px; background-image: url(&apos;project://database/Assets/LazyBuilder/Data/Textures/LoadingMessage.png?fileID=2800000&amp;guid=d0bfb0dd95b7d804ab4d74478303b7a4&amp;type=3#LoadingMessage&apos;); -unity-background-scale-mode: scale-to-fit; background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgba(255, 255, 255, 0.18);" />
+                                    <ui:VisualElement name="VisualElement" style="width: 41%; opacity: 0.27; margin-left: -32px;">
+                                        <ui:Label text="Loading" display-tooltip-when-elided="true" name="Error_Title" style="font-size: 49%; white-space: nowrap; -unity-font-style: bold; margin-bottom: 6px; width: 100%; overflow: hidden; flex-wrap: wrap;" />
+                                        <ui:Label text="Fetching Items from Server" display-tooltip-when-elided="true" name="Error_Subtitle" style="font-size: 17%; white-space: normal; width: 100%; overflow: hidden; flex-wrap: wrap;" />
                                     </ui:VisualElement>
                                 </ui:VisualElement>
                             </ui:VisualElement>

@@ -54,6 +54,7 @@ namespace LazyBuilder
         //Data Pages (Items & Error Pages)
         private VisualElement _mainPage;
         private VisualElement _errorPage;
+        private VisualElement _loadingPage;
         private Label _errorMessage;
 
         //Pagination
@@ -297,6 +298,7 @@ namespace LazyBuilder
             //Data Pages
             _mainPage = _root.Q("MainPage");
             _errorPage = _root.Q("ErrorPage");
+            _loadingPage = _root.Q("LoadingPage");
             _errorMessage = (Label)_root.Q("Error_Subtitle");
 
             //Pagination
@@ -596,7 +598,7 @@ namespace LazyBuilder
 
             previewRenderUtility.lights[0].shadows = LightShadows.Hard;
             previewRenderUtility.lights[1].shadows = LightShadows.Hard;
-             previewRenderUtility.ambientColor = Color.white;
+            previewRenderUtility.ambientColor = Color.white;
 
             previewTransform.position = new Vector3(0, 10.5f, -18);
             previewRenderUtility.camera.transform.position += (new Vector3(0, -.5835f, 1) * 17);
@@ -1243,15 +1245,24 @@ namespace LazyBuilder
         {
             _mainPage.style.display = DisplayStyle.Flex;
             _errorPage.style.display = DisplayStyle.None;
+            _loadingPage.style.display = DisplayStyle.None;
 
+        }
+        private void SwitchToLoadingPage()
+        {
+            _grid.Clear();
+            _loadingPage.style.display = DisplayStyle.Flex;
+            _mainPage.style.display = DisplayStyle.None;
+            _errorPage.style.display = DisplayStyle.None;
         }
 
         private void SwitchToErrorPage(string message)
         {
             _grid.Clear();
             _errorMessage.text = message;
-            _mainPage.style.display = DisplayStyle.None;
             _errorPage.style.display = DisplayStyle.Flex;
+            _mainPage.style.display = DisplayStyle.None;
+            _loadingPage.style.display = DisplayStyle.None;
         }
 
         #endregion Data Pages
@@ -1566,7 +1577,7 @@ namespace LazyBuilder
 
         #region Manage Servers
 
-        private void SetupServers()
+        private async void SetupServers()
         {
             serverList = new Dictionary<string, Server>();
 
@@ -1612,7 +1623,11 @@ namespace LazyBuilder
             _serversDropdown.value = preferences.LastServer;
 
             //Have to manually Trigger Server Change (bug)
-            ServerChanged(preferences.LastServer);
+            //If server is null or deleted from list - New Server Changed is the default
+            if (preferences.LastServer == null || !preferences.ServersId.Contains(preferences.LastServer))
+                ServerChanged(preferences.ServersId[0]);
+            else
+                ServerChanged(preferences.LastServer);
         }
 
 
@@ -1634,10 +1649,16 @@ namespace LazyBuilder
 
         private void SaveEditServers()
         {
+            List<string> newIds = new List<string>();
+
+            //First Iterates through UI List to Add/Edit
             foreach (var item in _serversListContainer.Children())
             {
+
                 var idField = (TextField)item.Q("Id");
-                var typeField = Utils.CreateDropdownField(item.Q("Type"));
+                newIds.Add(idField.value);
+
+                var typeField = item.Q<PopupField<string>>("TypeDrop");
                 var srcField = (TextField)item.Q("Src");
                 var branchField = (TextField)item.Q("Branch");
 
@@ -1651,8 +1672,10 @@ namespace LazyBuilder
                     if (preferences.ServersSrc[sameId] == srcField.value)
                         continue;
 
-                    //In case not change Src for the item Id
+                    //In case not change other parameters for the item Id
                     preferences.ServersSrc[sameId] = srcField.value;
+                    preferences.ServersBranch[sameId] = branchField.value;
+                    preferences.Servers_Type[sameId] = (ServerType)Enum.Parse(typeof(ServerType), typeField.value);
                     continue;
                 }
 
@@ -1664,6 +1687,18 @@ namespace LazyBuilder
                 preferences.ServersBranch.Add(
                     typeField.value == ServerType.GIT.ToString() ? branchField.value : null
                 );
+            }
+
+            //Then Iterates through Saved list to Remove deleted
+            for (int i = 0; i < preferences.ServersId.Count; i++)
+            {
+                if (newIds.Contains(preferences.ServersId[i])) continue;
+
+                //If not present - remove
+                preferences.ServersId.RemoveAt(i);
+                preferences.ServersSrc.RemoveAt(i);
+                preferences.ServersBranch.RemoveAt(i);
+                preferences.Servers_Type.RemoveAt(i);
             }
 
             UpdatePreferences();
@@ -1690,7 +1725,7 @@ namespace LazyBuilder
             var branchField = (TextField)element.Q("Branch");
             if (branch != null) branchField.value = branch;
 
-            var typesField = Utils.CreateDropdownField(element.Q("Type"));
+            var typesField = Utils.CreateDropdownField(element.Q("Type"), "TypeDrop");
             typesField.choices = GetServerTypes();
             typesField.RegisterValueChangedCallback(x =>
             {
@@ -1730,11 +1765,12 @@ namespace LazyBuilder
 
                 Server currentServer = serverList[newServer];
                 ServerManager.SetServer(currentServer);
+                SwitchToLoadingPage();
                 var result = await ServerManager.FetchServerData();
                 if (!result)
                 {
+                    LogMessage("No data was fetched from server", 2);
                     return;
-                    //Debug.Log()
                 }
             }
 
