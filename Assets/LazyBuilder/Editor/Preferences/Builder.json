@@ -1,24 +1,20 @@
 {
-    "LastServer": "Loc",
-    "LastItem": "ColoredDonut",
-    "LastItemType": "Bitten",
+    "LastServer": "",
+    "LastItem": "",
+    "LastItemType": "",
     "Servers_Type": [
-        0,
-        1
+        0
     ],
     "ServersId": [
-        "Main",
-        "Loc"
+        "Main"
     ],
     "ServersSrc": [
-        "wafflesgama/LazyBuilderLibrary",
-        "C:\\Projects\\LazyBuilder\\LazyBuilderData"
+        "wafflesgama/LazyBuilderLibrary"
     ],
     "ServersBranch": [
-        "main",
-        ""
+        "main"
     ],
     "PropCol": false,
     "PropRb": false,
-    "PageSize": 20
+    "PageSize": 50
 }
