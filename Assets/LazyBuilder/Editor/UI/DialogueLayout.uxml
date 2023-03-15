@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Label text="This is the default message for the lazy dialogue box. Please change this message using the according functions." display-tooltip-when-elided="true" name="Message" style="-unity-text-align: upper-center; margin-top: 11px; margin-bottom: 50px; white-space: normal; padding-right: 26px; padding-left: 26px;" />
+    <ui:VisualElement style="flex-direction: row; justify-content: flex-start; padding-top: 0; padding-right: 30px; padding-left: 30px; margin-bottom: 16px;">
+        <ui:Label text="Value " display-tooltip-when-elided="true" name="InputLabel" style="margin-right: 21px; display: none;" />
+        <ui:TextField picking-mode="Ignore" value="filler text" text="filler text" name="InputField" style="padding-bottom: 0; padding-left: 0; margin-bottom: 0; padding-right: 0; margin-top: 0; margin-right: 0; margin-left: 0; flex-grow: 1;" />
+    </ui:VisualElement>
+    <ui:VisualElement style="flex-direction: row; justify-content: space-between; padding-left: 50px; padding-right: 50px; height: 25px;">
+        <ui:Button text="Ok" display-tooltip-when-elided="true" name="OkBttn" style="padding-left: 26px; padding-right: 26px; padding-top: 8px; padding-bottom: 8px;" />
+        <ui:Button text="Cancel" display-tooltip-when-elided="true" name="CancelBttn" style="padding-left: 26px; padding-right: 26px; padding-top: 8px; padding-bottom: 8px;" />
+    </ui:VisualElement>
+</ui:UXML>
