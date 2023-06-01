@@ -1,7 +1,7 @@
 ![Banner](./ReadmeFiles/banner.png)
 
 ## Build your desired levels at an instant of a click! 🛠️
-Lazy Builder is a Tool & Library designed to simplify the construction of 3D environments. 
+Lazy Fetcher is a Tool & Library designed to simplify the construction of 3D environments. 
 
 <br/>
 
@@ -11,7 +11,7 @@ Since the tool by default does not contain any 3D assets its whole source occupi
 <br/>
 
 ## Make use of the Main Library 📦
-The Lazy Builder comes with a [Main official Library](https://github.com/wafflesgama/LazyBuilderLibrary/) that has hundreds of CC0 Assets to help you build/prototype your levels.  
+The Lazy Fetcher comes with a [Main official Library](https://github.com/wafflesgama/LazyFetcherLibrary/) that has hundreds of CC0 Assets to help you build/prototype your levels.  
 
 ![Demo1](./ReadmeFiles/demo1.gif)
 <br/>
@@ -42,7 +42,7 @@ Check the [Quick Start Guide](QuickGuide.md) for a brief & introductory explanat
 ## Installation ⤵️
 Currently in stage of approval for the Unity Asset Store
 <br/>
-For now you can download & import manually the ***.unitypackage** in the [Releases Section](https://github.com/wafflesgama/LazyBuilder/releases) 
+For now you can download & import manually the ***.unitypackage** in the [Releases Section](https://github.com/wafflesgama/LazyFetcher/release) 
 
 <br/>
 
@@ -53,7 +53,7 @@ If you found out this tool useful and/or want to help this project continue its 
 
 
 ## Support 🧑‍💻  
-If you spotted a bug, need a feature or have an awesome suggestion you can always [create a GitHub issue](https://github.com/wafflesgama/LazyBuilder/issues), fork it & merge request or simply contact me directly via e-mail. 
+If you spotted a bug, need a feature or have an awesome suggestion you can always [create a GitHub issue](https://github.com/wafflesgama/LazyFetcher/issues), fork it & merge request or simply contact me directly via e-mail. 
 If you want to be a part of this project and contribute to it feel free to do so!
 
 <br/>
