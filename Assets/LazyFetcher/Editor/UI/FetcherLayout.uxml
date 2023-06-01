@@ -1,0 +1,145 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="MainContainer" style="flex-grow: 1;">
+        <ui:VisualElement name="VisualElement" style="flex-direction: row; flex-shrink: 0; flex-grow: 1; flex-basis: 1px;">
+            <ui:VisualElement name="MainContainer" style="flex-shrink: 0; flex-grow: 1; flex-basis: 1px;">
+                <ui:VisualElement name="TopBar" style="flex-direction: row; margin-top: 6px; margin-bottom: -5px; padding-top: 0; align-items: center; height: 26px; margin-left: 7px;">
+                    <ui:VisualElement style="flex-direction: row; display: none;">
+                        <ui:Button text="Main" display-tooltip-when-elided="true" style="padding-top: 3px; padding-bottom: 3px;" />
+                        <ui:Label text="/" display-tooltip-when-elided="true" />
+                        <ui:Button text="Main" display-tooltip-when-elided="true" style="padding-top: 3px; padding-bottom: 3px;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="PoolsContainer" style="height: 95%; border-top-left-radius: 3px; border-bottom-left-radius: 3px; background-color: rgb(88, 88, 88); justify-content: center; padding-left: 0; padding-right: 0; padding-bottom: 0; margin-left: 3px; margin-right: -1px; margin-top: 1px; flex-direction: row; align-items: center; overflow: visible;">
+                        <ui:Label text="Main" display-tooltip-when-elided="true" name="PoolSelected" style="margin-left: 10px; padding-right: 0; font-size: 13px; -unity-font-style: normal; display: flex; padding-left: 0; justify-content: flex-start; -unity-text-align: middle-left; margin-right: 5px; margin-top: 0;" />
+                        <ui:VisualElement name="ServerDropIcon" style="width: 10px; height: 10px; margin-right: 5px; display: flex;" />
+                        <ui:VisualElement name="PoolsList" focusable="true" style="display: flex; visibility: visible; opacity: 0; position: absolute; left: 0; height: 100%; width: 100%; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; background-color: rgba(255, 255, 255, 0); overflow: visible;" />
+                    </ui:VisualElement>
+                    <ui:TextField picking-mode="Ignore" usage-hints="DynamicColor" text="Search" name="SearchBar" style="justify-content: flex-start; flex-shrink: 0; flex-grow: 1; border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-left-color: rgb(255, 255, 255); border-right-color: rgb(255, 255, 255); border-top-color: rgb(255, 255, 255); border-bottom-color: rgb(255, 255, 255); background-color: rgb(42, 42, 42); padding-left: 0; -unity-text-outline-color: rgba(255, 255, 255, 0); -unity-background-image-tint-color: rgb(42, 42, 42); margin-left: 0; margin-top: 0; margin-bottom: 0; font-size: 13px; padding-top: 1px; padding-bottom: 1px; padding-right: 1px; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; color: rgb(255, 255, 255); flex-basis: 1px; height: 100%; margin-right: 0;" />
+                    <ui:Button display-tooltip-when-elided="true" name="SearchBttn" style="padding-right: 0; padding-top: 0; padding-left: 0; height: 95%; width: 32px; background-color: rgb(88, 88, 88); border-left-color: rgba(255, 255, 255, 0); border-right-color: rgba(255, 255, 255, 0); border-top-color: rgba(255, 255, 255, 0); border-bottom-color: rgba(255, 255, 255, 0); padding-bottom: 0; margin-left: -28px; -unity-background-scale-mode: scale-and-crop; -unity-background-image-tint-color: rgb(255, 255, 255); justify-content: center; align-items: center; border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 3px; border-bottom-right-radius: 3px; margin-right: 0;">
+                        <ui:VisualElement name="SearchBttnIcon" style="height: 18px; width: 18px; -unity-background-image-tint-color: rgb(255, 255, 255);" />
+                    </ui:Button>
+                    <ui:VisualElement style="flex-direction: row; flex-grow: 0; height: 100%; margin-left: 6px; align-items: center; margin-right: 0;">
+                        <ui:Button display-tooltip-when-elided="true" name="RandomSortBttn" tooltip="Sort Items Randomly" style="padding-right: 0; padding-top: 0; padding-left: 0; height: 95%; width: 28px; background-color: rgb(88, 88, 88); border-left-color: rgba(255, 255, 255, 0); border-right-color: rgba(255, 255, 255, 0); border-top-color: rgba(255, 255, 255, 0); border-bottom-color: rgba(255, 255, 255, 0); padding-bottom: 0; margin-left: 0; -unity-background-scale-mode: scale-and-crop; -unity-background-image-tint-color: rgb(255, 255, 255); justify-content: center; align-items: center; border-top-left-radius: 3px; border-bottom-left-radius: 3px; border-top-right-radius: 0; border-bottom-right-radius: 0; margin-right: 1px; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; margin-top: 0; margin-bottom: 0;">
+                            <ui:VisualElement name="RandomSortBttnIcon" style="height: 17px; width: 17px; -unity-background-image-tint-color: rgb(255, 255, 255); opacity: 0.88; justify-content: center;" />
+                        </ui:Button>
+                        <ui:Button display-tooltip-when-elided="true" name="AlphaSortBttn" tooltip="Sort Items Alphabetically" style="padding-right: 0; padding-top: 0; padding-left: 0; height: 95%; width: 28px; background-color: rgb(88, 88, 88); border-left-color: rgba(255, 255, 255, 0); border-right-color: rgba(255, 255, 255, 0); border-top-color: rgba(255, 255, 255, 0); border-bottom-color: rgba(255, 255, 255, 0); padding-bottom: 0; margin-left: 0; -unity-background-scale-mode: scale-and-crop; -unity-background-image-tint-color: rgb(255, 255, 255); justify-content: center; align-items: center; border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; margin-right: 1px; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; margin-top: 0; margin-bottom: 0;">
+                            <ui:VisualElement name="AlphaSortBttnIcon" style="height: 14px; width: 14px; -unity-background-image-tint-color: rgb(255, 255, 255); opacity: 0.88;" />
+                        </ui:Button>
+                        <ui:Button display-tooltip-when-elided="true" name="SimilarSortBttn" tooltip="Sort Items Similar Tags" style="padding-right: 0; padding-top: 0; padding-left: 0; height: 95%; width: 28px; background-color: rgb(88, 88, 88); border-left-color: rgba(255, 255, 255, 0); border-right-color: rgba(255, 255, 255, 0); border-top-color: rgba(255, 255, 255, 0); border-bottom-color: rgba(255, 255, 255, 0); padding-bottom: 0; margin-left: 0; -unity-background-scale-mode: scale-and-crop; -unity-background-image-tint-color: rgb(255, 255, 255); justify-content: center; align-items: center; border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 3px; border-bottom-right-radius: 3px; margin-right: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; margin-top: 0; margin-bottom: 0;">
+                            <ui:VisualElement name="SimilarSortBttnIcon" style="height: 18px; width: 18px; -unity-background-image-tint-color: rgb(255, 255, 255); opacity: 0.88;" />
+                        </ui:Button>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="test" />
+                <ui:VisualElement name="Body" style="margin-top: 9px; height: 100%; width: 100%; flex-direction: row;">
+                    <ui:VisualElement name="Main" style="flex-grow: 1; flex-shrink: 0; width: 100%;">
+                        <ui:VisualElement name="MainGrid" style="height: 90%; flex-grow: 1; flex-shrink: 0; background-color: rgba(0, 0, 0, 0.24); display: flex; overflow: hidden;">
+                            <ui:ScrollView name="MainPage" mode="Vertical" show-horizontal-scroller="true" horizontal-scroller-visibility="Hidden" elasticity="0.12" style="background-color: rgba(0, 0, 0, 0); flex-grow: 1; width: auto; flex-direction: column; flex-wrap: wrap; flex-shrink: 0; align-items: flex-start; height: auto; display: none;">
+                                <ui:VisualElement name="ItemsColumn1" style="flex-direction: row; width: 100%; max-width: none; flex-wrap: wrap; overflow: visible; flex-shrink: 0; align-items: flex-start;" />
+                            </ui:ScrollView>
+                            <ui:VisualElement name="ErrorPage" style="flex-grow: 1; flex-shrink: 0; justify-content: center; align-items: center; overflow: hidden; display: none;">
+                                <ui:VisualElement style="flex-direction: row; justify-content: center; align-items: center; background-image: none; width: 96%; overflow: hidden; height: 60%;">
+                                    <ui:VisualElement name="Error_Img" style="width: 315px; height: 269px; background-image: url(&apos;project://database/Assets/LazyFetcher/Editor/Textures/ErrorMessage.png?fileID=2800000&amp;guid=523230e871825f6448b4889dd1c69c45&amp;type=3#ErrorMessage&apos;); -unity-background-scale-mode: scale-to-fit; background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgba(255, 255, 255, 0.18);" />
+                                    <ui:VisualElement name="VisualElement" style="width: 41%; opacity: 0.27; margin-left: -32px;">
+                                        <ui:Label text="Oops!" display-tooltip-when-elided="true" name="Error_Title" style="font-size: 49%; white-space: nowrap; -unity-font-style: bold; margin-bottom: 6px; width: 100%; overflow: hidden; flex-wrap: wrap;" />
+                                        <ui:Label text="No items found" display-tooltip-when-elided="true" name="Error_Subtitle" style="font-size: 17%; white-space: normal; width: 100%; overflow: hidden; flex-wrap: wrap;" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement name="LoadingPage" style="flex-grow: 1; flex-shrink: 0; justify-content: center; align-items: center; overflow: hidden; display: none;">
+                                <ui:VisualElement style="flex-direction: row; justify-content: center; align-items: center; background-image: none; width: 96%; overflow: hidden; height: 60%;">
+                                    <ui:VisualElement name="Error_Img" style="width: 315px; height: 269px; background-image: url(&apos;project://database/Assets/LazyFetcher/Editor/Textures/LoadingMessage.png?fileID=2800000&amp;guid=d0bfb0dd95b7d804ab4d74478303b7a4&amp;type=3#LoadingMessage&apos;); -unity-background-scale-mode: scale-to-fit; background-color: rgba(0, 0, 0, 0); -unity-background-image-tint-color: rgba(255, 255, 255, 0.18);" />
+                                    <ui:VisualElement name="VisualElement" style="width: 41%; opacity: 0.27; margin-left: -32px;">
+                                        <ui:Label text="Loading" display-tooltip-when-elided="true" name="Error_Title" style="font-size: 49%; white-space: nowrap; -unity-font-style: bold; margin-bottom: 6px; width: 100%; overflow: hidden; flex-wrap: wrap;" />
+                                        <ui:Label text="Fetching Items from Server" display-tooltip-when-elided="true" name="Error_Subtitle" style="font-size: 17%; white-space: normal; width: 100%; overflow: hidden; flex-wrap: wrap;" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="MainFooter" style="height: 23px; flex-direction: row; flex-grow: 0; flex-shrink: 0; margin-bottom: 0; padding-left: 5px; padding-right: 5px; padding-top: 2px; padding-bottom: 2px;">
+                            <ui:Button text="&lt;" display-tooltip-when-elided="true" name="PrevPageBttn" style="font-size: 9px; margin-right: 0;" />
+                            <ui:Button text="&gt;" display-tooltip-when-elided="true" name="NextPageBttn" style="-unity-font-style: normal; font-size: 9px; margin-left: 0;" />
+                            <ui:Label text="1-20 of 69 Results" display-tooltip-when-elided="true" name="PageIndexMssg" style="font-size: 8px; -unity-text-align: middle-left;" />
+                            <ui:VisualElement name="Spacer" style="flex-grow: 1;" />
+                            <ui:Label text="Page Size: " display-tooltip-when-elided="true" style="font-size: 8px; -unity-text-align: middle-left;" />
+                            <ui:VisualElement name="PageSizeDropdown" style="font-size: 8px; -unity-text-align: middle-left;" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="SideContainer" tabindex="0" style="flex-direction: row; background-color: rgba(38, 35, 35, 0); flex-grow: 0; min-width: 250px; flex-basis: 1px;">
+                <ui:VisualElement name="TabContent_Main" tabindex="0" style="flex-grow: 1; flex-shrink: 0; background-color: rgba(113, 113, 113, 0); align-items: stretch; display: flex; justify-content: flex-end;">
+                    <ui:VisualElement name="Space" style="height: 81px; background-color: rgb(54, 54, 54); flex-basis: 0; min-height: 81px;" />
+                    <ui:ScrollView name="ScrollView" horizontal-scroller-visibility="Hidden" vertical-page-size="-1" touch-scroll-type="Clamped" vertical-scroller-visibility="Auto" style="flex-grow: 1; flex-shrink: 1; align-items: flex-start; background-color: rgba(51, 51, 51, 0); min-width: auto; flex-basis: auto; margin-top: 0; padding-right: 0; padding-left: 0;">
+                        <ui:VisualElement name="ItemThumbnailContainer" style="width: auto; height: auto; background-image: none; -unity-text-align: upper-left; align-items: center; margin-bottom: 0; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); padding-left: 2px; padding-right: 2px; padding-top: 2px; padding-bottom: 0; flex-direction: row; justify-content: center; background-color: rgba(46, 46, 46, 0); -unity-background-image-tint-color: rgba(255, 255, 255, 0); border-top-width: 0; border-left-width: 0; border-right-width: 0; border-bottom-width: 0; opacity: 1;">
+                            <ui:Label display-tooltip-when-elided="true" name="PreviewLoaderT" text="..." style="font-size: 20px; -unity-font-style: bold; position: absolute; -unity-text-align: middle-center; display: flex;" />
+                            <ui:VisualElement name="ItemThumbnail" style="width: 100%; height: 128px; background-image: none; -unity-text-align: upper-left; align-items: center; border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; display: flex; -unity-background-image-tint-color: rgb(255, 255, 255); opacity: 1; visibility: hidden; padding-bottom: 0; padding-left: 0; padding-right: 0; padding-top: 0; background-color: rgb(42, 42, 42); justify-content: center; margin-bottom: 20px; margin-top: -20px; border-top-width: 0; border-left-color: rgba(115, 115, 115, 0.18); border-right-color: rgba(115, 115, 115, 0.18); border-top-color: rgba(115, 115, 115, 0.18); border-bottom-color: rgba(115, 115, 115, 0.18);" />
+                            <ui:VisualElement name="VisualElement" style="justify-content: center; margin-top: 23px; display: none;">
+                                <ui:Button text="+" display-tooltip-when-elided="true" name="ZoomIn" style="width: 21px; margin-bottom: 24px; -unity-background-scale-mode: scale-to-fit;" />
+                                <ui:Button text="-" display-tooltip-when-elided="true" name="ZoomOut" style="width: 10px; -unity-background-scale-mode: scale-to-fit;" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="Properties" style="padding-right: 10px; padding-left: 10px; margin-top: 10px;">
+                            <ui:VisualElement name="PalleteContainer" style="flex-direction: row; justify-content: space-between; margin-bottom: 0; max-height: none; min-height: auto; height: auto; align-items: stretch; margin-right: 0; margin-left: 0; display: flex; margin-top: 0;">
+                                <ui:Label text="Color Pallete" display-tooltip-when-elided="true" style="padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0; margin-bottom: 0;" />
+                                <ui:VisualElement name="Pallete" style="flex-direction: row; justify-content: flex-start; margin-bottom: 9px; align-items: center; margin-right: 0; padding-left: 0;" />
+                            </ui:VisualElement>
+                            <ui:TextField picking-mode="Ignore" label="Name" name="Prop_Name" style="margin-left: 0; margin-right: 0; margin-bottom: 3px; padding-right: 0; flex-grow: 1;" />
+                            <ui:Toggle label="Create Colliders" name="Prop_Col" style="margin-left: 0; margin-right: 0; margin-top: 0; flex-shrink: 0; flex-basis: auto; flex-grow: 0; margin-bottom: 3px;" />
+                            <ui:Toggle label="Create Rigidbody" name="Prop_Rb" style="margin-left: 0; margin-right: 0; margin-top: 0; flex-shrink: 0; flex-basis: auto; flex-grow: 0; margin-bottom: 3px;" />
+                        </ui:VisualElement>
+                    </ui:ScrollView>
+                    <ui:Button display-tooltip-when-elided="true" name="GenerateBttn" style="padding-top: 4px; padding-bottom: 4px; margin-top: 9px; margin-bottom: -6px; top: auto; flex-grow: 0; bottom: 6px; margin-left: 0; margin-right: 0; padding-left: 4px; padding-right: 4px; flex-direction: row; align-items: center; justify-content: center; width: auto; display: flex; border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; flex-basis: auto; height: auto; background-color: rgb(88, 88, 88);">
+                        <ui:VisualElement name="GenerateBttnIcon" style="width: 15px; height: 15px; margin-right: 3px; -unity-background-scale-mode: scale-to-fit;" />
+                        <ui:Label text="Fetch" display-tooltip-when-elided="true" />
+                    </ui:Button>
+                    <ui:VisualElement name="Header" tabindex="2" style="width: 100%; background-color: rgb(54, 54, 54); flex-grow: 0; height: 73px; position: absolute; top: 0; border-bottom-width: 0; border-left-color: rgb(56, 56, 56); border-right-color: rgb(56, 56, 56); border-top-color: rgb(56, 56, 56); border-bottom-color: rgb(56, 56, 56); display: flex;">
+                        <ui:VisualElement name="TitleContainer" style="width: auto; background-color: rgba(56, 56, 56, 0);">
+                            <ui:Label text=" Setttings" display-tooltip-when-elided="true" name="TitleText" style="margin-left: 9px; margin-right: 17px; margin-top: 17px; margin-bottom: 11px; font-size: 22px; -unity-text-align: upper-right; -unity-font-style: bold; flex-direction: column; width: auto;" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="ItemsTypeContainer" style="background-color: rgba(64, 64, 64, 0); flex-shrink: 1; flex-basis: auto; display: flex; border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 0; border-bottom-width: 0; border-left-width: 0; margin-left: 0; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); border-right-width: 0; border-top-width: 0; margin-bottom: -10px; flex-direction: row; align-items: center; width: auto; flex-grow: 0;">
+                            <ui:VisualElement style="flex-direction: row; align-items: center; background-color: rgb(64, 64, 64);">
+                                <ui:Label text="Label" display-tooltip-when-elided="true" name="ItemTypeSelected" style="margin-left: 13px; margin-right: 15px; margin-top: 6px; margin-bottom: 6px; font-size: 15px; -unity-font-style: normal;" />
+                                <ui:VisualElement name="ItemTypeIcon" style="width: 16px; height: 20px; margin-right: 4px; justify-content: flex-start; -unity-background-scale-mode: scale-to-fit; margin-top: 0;" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="ItemTypeDropdown" style="-unity-text-align: upper-left; padding-bottom: 0; margin-bottom: 0; padding-left: 0; padding-right: 0; position: absolute; width: 100%; height: 100%; opacity: 0; margin-left: 0; margin-right: 0; margin-top: 0; flex-direction: column; flex-shrink: 1; display: flex; border-left-color: rgba(0, 0, 0, 0); border-right-color: rgba(0, 0, 0, 0); border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); -unity-slice-left: -57; -unity-slice-top: -57; -unity-slice-right: -57; -unity-slice-bottom: -57; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; background-color: rgb(197, 165, 165);" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="TabContent_Servers" tabindex="0" style="flex-grow: 1; flex-shrink: 0; background-color: rgba(113, 113, 113, 0); align-items: stretch; display: none; justify-content: flex-end; visibility: visible; overflow: visible;">
+                    <ui:VisualElement name="Space" style="height: 81px; background-color: rgb(54, 54, 54); flex-basis: 0; min-height: 81px;" />
+                    <ui:ScrollView name="ScrollView" horizontal-scroller-visibility="Hidden" vertical-page-size="-1" touch-scroll-type="Clamped" vertical-scroller-visibility="Auto" style="flex-grow: 1; flex-shrink: 1; align-items: flex-start; background-color: rgba(51, 51, 51, 0); min-width: auto; flex-basis: auto; margin-top: 0; padding-right: 0; padding-left: 0;">
+                        <ui:VisualElement name="Servers" style="padding-right: 5px; padding-left: 5px; margin-top: 10px;">
+                            <ui:VisualElement name="ServersList" />
+                            <ui:VisualElement name="ServerOperations" style="flex-direction: row-reverse; margin-top: 6px;">
+                                <ui:Button text="+" display-tooltip-when-elided="true" name="AddServer" />
+                                <ui:Button text="-" display-tooltip-when-elided="true" name="RemoveServer" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:ScrollView>
+                    <ui:Button display-tooltip-when-elided="true" name="SaveServersBttn" style="padding-top: 4px; padding-bottom: 4px; margin-top: 9px; margin-bottom: -6px; top: auto; flex-grow: 0; bottom: 6px; margin-left: 0; margin-right: 0; padding-left: 4px; padding-right: 4px; flex-direction: row; align-items: center; justify-content: center; width: auto; display: flex; border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; flex-basis: auto; height: auto; background-color: rgb(88, 88, 88);">
+                        <ui:VisualElement name="SaveServersIcon" style="width: 15px; height: 15px; margin-right: 3px; -unity-background-scale-mode: scale-to-fit;" />
+                        <ui:Label text="Save" display-tooltip-when-elided="true" />
+                    </ui:Button>
+                    <ui:VisualElement name="Header" tabindex="2" style="width: 100%; background-color: rgb(54, 54, 54); flex-grow: 0; height: 73px; position: absolute; top: 0; border-bottom-width: 0; border-left-color: rgb(56, 56, 56); border-right-color: rgb(56, 56, 56); border-top-color: rgb(56, 56, 56); border-bottom-color: rgb(56, 56, 56); display: flex;">
+                        <ui:VisualElement name="TitleContainer_servers" style="width: auto; background-color: rgba(56, 56, 56, 0);">
+                            <ui:Label text=" Servers" display-tooltip-when-elided="true" name="TitleText" style="margin-left: 9px; margin-right: 17px; margin-top: 17px; margin-bottom: 11px; font-size: 22px; -unity-text-align: upper-right; -unity-font-style: bold; flex-direction: column; width: auto;" />
+                        </ui:VisualElement>
+                        <ui:Button text="&lt;-" display-tooltip-when-elided="true" name="Back_servers" style="position: absolute; top: 9px; left: 3px;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="FooterBar" style="flex-direction: row; background-color: rgb(60, 60, 60); height: 17px; padding-left: 5px;">
+            <ui:Label display-tooltip-when-elided="true" name="Debug" style="opacity: 0.76; font-size: 9px; -unity-text-align: middle-left; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0;" />
+            <ui:VisualElement name="Spacer" style="flex-grow: 1; flex-shrink: 10;" />
+            <ui:VisualElement name="About" style="flex-direction: row; align-items: center; margin-right: 5px;">
+                <ui:VisualElement name="AboutIcon" style="width: 17px; height: 14px; justify-content: flex-start; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 0; padding-right: 0; -unity-background-scale-mode: scale-to-fit; opacity: 0.61;" />
+                <ui:VisualElement choices="System.Collections.Generic.List`1[System.String]" name="AboutDrop" tooltip="About" style="position: absolute; width: 100%; display: flex; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; opacity: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Settings" style="flex-direction: row; align-items: center; margin-right: 5px;">
+                <ui:VisualElement name="SettingsIcon" style="width: 17px; height: 100%; justify-content: flex-start; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 0; padding-right: 0;" />
+                <ui:VisualElement name="SettingsDrop" tooltip="Settings" style="position: absolute; width: 100%; display: flex; margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 0; opacity: 0; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

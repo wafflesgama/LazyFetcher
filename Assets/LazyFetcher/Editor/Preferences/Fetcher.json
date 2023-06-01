@@ -1,0 +1,20 @@
+{
+    "LastServer": "Local",
+    "LastItem": "",
+    "LastItemType": "",
+    "Servers_Type": [
+        0
+    ],
+    "ServersId": [
+        "Main"
+    ],
+    "ServersSrc": [
+        "wafflesgama/LazyFetcherLibrary"
+    ],
+    "ServersBranch": [
+        "main"
+    ],
+    "PropCol": false,
+    "PropRb": false,
+    "PageSize": 0
+}
