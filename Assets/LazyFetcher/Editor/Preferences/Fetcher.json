@@ -1,5 +1,5 @@
 {
-    "LastServer": "Local",
+    "LastServer": "Main",
     "LastItem": "",
     "LastItemType": "",
     "Servers_Type": [
@@ -16,5 +16,5 @@
     ],
     "PropCol": false,
     "PropRb": false,
-    "PageSize": 0
+    "PageSize": 20
 }
